@@ -1060,6 +1060,94 @@ void q_5_10() {
 
 }
 
+
+void dynamic_array() {
+    // 使用 new和 delete表达和c中malloc和free类似的功能，即在堆（自由存储区）中分配存储空间。
+    int *pia = new int[3];
+    pia[0] = 123;
+    cout << pia[0] << endl;
+    delete [] pia;
+}
+
+
+void q_5_14() {
+    pair<string, int> max_count_pair;
+    int count = 0;
+    for(string new_string, pre_string; cin >> new_string; pre_string = new_string) {
+        if (new_string == pre_string) {
+            ++count;
+        } else {
+            if (count > max_count_pair.second) {
+                max_count_pair = {pre_string, count};
+            }
+            count = 0;
+        }
+    }
+    if (max_count_pair.first.empty()) {
+        cout << "没有重复" << endl;
+    } else {
+        cout << "the word " << max_count_pair.first << " occurred " << max_count_pair.second + 1 << " times. " << endl;
+    }
+}
+
+bool is_prefix(vector<int> const &small, vector<int> const &big) {
+    if (small.size() > big.size()) {
+        return is_prefix(big, small);
+    }
+    for (decltype(small.size()) i = 0; i != small.size(); ++i) {
+        if (small[i] != big[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void q_5_17() {
+    vector<int> small = {0, 1, 1, 2, 4}, big = {0, 1, 1, 2, 3, 5, 8};
+    if (is_prefix(small, big)) {
+        cout << "small is a prefix of big" << endl;
+    } else {
+        cout << "small is not a prefix of big" << endl;
+    }
+}
+
+void test_do_while() {
+    string rsp; // used in the condition; can’t be defined inside the do
+    do {
+        cout << "please enter two values: ";
+        int val1 = 0, val2 = 0;
+        cin >> val1 >> val2;
+        cout << "The sum of " << val1 << " and " << val2
+        << " = " << val1 + val2 << "\n\n"
+        << "More? Enter yes or no: ";
+        cin >> rsp;
+    } while (!rsp.empty() && rsp[0] != 'n'); // condition中不能有 声明
+}
+
+void q_5_19() {
+    string rsp;
+    do {
+        cout << "please enter two string: ";
+        string val1, val2;
+        cin >> val1 >> val2;
+        cout << (val1 <= val2 ? val1 : val2)
+            << " is less than the other." << "\r\n"
+            << "More? Enter yes or no: ";
+        cin >> rsp;
+    } while (!rsp.empty() && rsp[0] != 'n');
+}
+
+void q_5_20() {
+    string read, tmp;
+    while (cin >> read) {
+        if (read == tmp) break;
+        tmp = read;
+    }
+    // eof 判断输入是否结束,或者文件结束符,等同于 CTRL+Z
+    if (cin.eof()) cout << "no word was repeated." << endl;
+    else cout << read << " occurs twice in succession" << endl;
+}
+
 void q_5_24() {
     int i, j;
     cin >> i >> j;
