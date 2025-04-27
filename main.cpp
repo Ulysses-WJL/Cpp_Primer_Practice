@@ -3,6 +3,7 @@
 #include <cstring>
 #include <cctype>
 #include <vector>
+#include <opencv2/core.hpp>
 #include "Sales_item.h"
 
 using std::cout;
@@ -13,6 +14,7 @@ using std::getline;
 using std::vector;
 using std::begin;
 using std::end;
+using std::runtime_error;
 
 // TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
@@ -796,6 +798,295 @@ void test_multi_dimension_array() {
 
 }
 
+void q_4_13() {
+    int i;
+    double d;
+    // d = i = 3.5;
+    // cout << "d: " << d << endl; // 3
+    i = d = 3.5;
+    cout << "i: " << i << " d: " << d << endl;  // 3
+}
+
+
+void test_dereference_increment() {
+    vector<int> vec = {0, 1, 2, -1, 3, 4};
+    auto pbeg = vec.begin();
+    while (pbeg != vec.end() && *pbeg >= 0)
+        cout << *pbeg++ << ' ';
+    cout << endl;
+
+}
+
+void test_member_access() {
+    string s1 = "a string!", *p = &s1;
+    auto n = s1.size();
+    n = (*p).size();  // dot 优先级比 解引用更高
+    n = p->size();
+
+}
+
+void q_4_20() {
+    vector<string> svec = {"hello", "world", " !"};
+    auto iter = svec.begin();
+    *iter++;  // 返回当前的元素，再递增
+    // (*iter)++; // string 没有++
+    // *iter.empty();  // dot 优先级更改，指针没有empty()
+    bool result1 = (*iter).empty();   // 当前的元素是否为空。
+    bool result2 = iter->empty();  // 当前的元素是否为空。
+    // ++*iter;  // string 没有++
+    bool result3 = iter++->empty();  // 先判断当前string是否为空，在指向下一个
+}
+
+string test_conditional_operator(int grade) {
+    string final_grade = (grade > 90) ? "high pass"
+                                      : (grade < 60) ? "fail" : "pass";
+    return final_grade;
+}
+
+
+void q_4_26() {
+    cout << "=================" << endl;
+    cout << (~'q' << 6) << endl;
+}
+
+void test_size_of() {
+    struct Sales_data {
+        std::string bookNo;
+        unsigned units_sold = 0;
+        double revenue = 0.0;
+    };
+    Sales_data data, *p;
+    sizeof(Sales_data); // size required to hold an object of type Sales_data
+    size_t sales_size =  sizeof data; // size of data’s type, i.e., sizeof(Sales_data)
+    sizeof p; // size of a pointer
+    sizeof *p; // size of the type to which p points, i.e., sizeof(Sales_data)
+    sizeof data.revenue; // size of the type of Sales_data’s revenue member
+    sizeof Sales_data::revenue; // alternative way to get the size of revenue
+    cout << "Sales_data size: " << sales_size << endl;
+}
+
+void q_4_28() {
+    cout << "bool:\t\t" << sizeof(bool) << " bytes" << endl << endl;
+
+    cout << "char:\t\t" << sizeof(char) << " bytes" << endl;
+    cout << "wchar_t:\t" << sizeof(wchar_t) << " bytes" << endl;
+    cout << "char16_t:\t" << sizeof(char16_t) << " bytes" << endl;
+    cout << "char32_t:\t" << sizeof(char32_t) << " bytes" << endl << endl;
+
+    cout << "short:\t\t" << sizeof(short) << " bytes" << endl;
+    cout << "int:\t\t" << sizeof(int) << " bytes" << endl;
+    cout << "long:\t\t" << sizeof(long) << " bytes" << endl;
+    cout << "long long:\t" << sizeof(long long) << " bytes" << endl << endl;
+
+    cout << "float:\t\t" << sizeof(float) << " bytes" << endl;
+    cout << "double:\t\t" << sizeof(double) << " bytes" << endl;
+    cout << "long double:\t" << sizeof(long double) << " bytes" << endl << endl;
+}
+
+void q_4_29() {
+    int x[10]; int *p = x;
+    cout << "==========4_29==========" << endl;
+    cout << sizeof(x) / sizeof(*x) << endl;
+    cout << sizeof(p) / sizeof(*p) << endl;
+}
+
+int q_4_33(bool some_value) {
+    int x = 10, y = 10;
+    // 逗号表达式的优先级是最低的 等价于 (some_value ? ++x, ++y : --x), --y
+    int ret = (some_value ? ++x, ++y : --x, --y);
+    return ret;
+}
+
+void test_conversions() {
+    bool flag; char cval;
+    short sval; unsigned short usval;
+    int ival; unsigned int uival;
+    long lval; unsigned long ulval;
+    float fval; double dval;
+    3.14159L + 'a'; // ’a’ promoted to int, then that int converted to long double
+    dval + ival; // ival converted to double
+    dval + fval; // fval converted to double
+    ival = dval; // dval converted (by truncation) to int
+    flag = dval; // if dval is 0, then flag is false, otherwise true
+    cval + fval; // cval promoted to int, then that int converted to float
+    sval + cval; // sval and cval promoted to int
+    cval + lval; // cval converted to long
+    ival + ulval; // ival converted to unsigned long
+    usval + ival; // promotion depends on the size of unsigned short and int
+    uival + lval; // conversion depends on the size of unsigned int and long
+
+
+}
+
+void test_casting() {
+    int i = 10, j = 3;
+    // double slop = j / i;  // 0
+    // 显示转为 double
+    double slop = static_cast<double>(j) / i;
+    cout << "slop： " << slop << endl;
+    void *p = &slop;
+    double *dp = static_cast<double *>(p);
+
+    //const_cast：只能改变运算对象的底层const，一般可用于去除const性质
+    const char *pc = "test";
+    char *pc1 = const_cast<char *>(pc);
+
+    const char *cp = "hello";
+    // char *q = static_cast<char*>(cp);
+    static_cast<string>(cp); // ok: converts string literal to string
+    // const_cast<string>(cp); // error: const_cast only changes constness
+
+    // reinterpret_cast：用于直接重新解释内存或指针类型，但需要开发者对内存布局、对齐和类型安全有深刻理解。
+    int x = 42;
+    void* ptr = reinterpret_cast<void*>(&x); // 指针类型转换
+    int* px = reinterpret_cast<int*>(ptr);    // 转回原类型
+    cout << *px << endl; // 输出 42
+}
+
+void  q_5_5() {
+    vector<string> scores = {"F", "D", "C", "B", "A", "A++"};
+    int grade = 0;
+    string lettergrage;
+    while(cin >> grade) {
+        if (grade < 60) {
+            lettergrage = scores[0];
+        } else if (grade == 100){
+            lettergrage = scores[5];
+        } else {
+            // 90 91 92 A-, 99 98 A+
+            lettergrage = scores[(grade - 50) / 10];
+            lettergrage += grade % 10 > 7 ? "+" :
+                            grade % 10 < 3 ? "-" : "";
+        }
+        cout << lettergrage << endl;
+
+    }
+}
+
+void  q_5_6() {
+    vector<string> scores = {"F", "D", "C", "B", "A", "A++"};
+    int grade = 0;
+    string lettergrage;
+    while(cin >> grade) {
+        lettergrage =  grade < 60 ? scores[0] : scores[(grade - 50) / 10];
+        lettergrage += (grade == 100 || grade < 60) ? "" :  (grade % 10 > 7) ? "+" :  grade % 10 < 3 ? "-" : "";
+        cout << lettergrage << endl;
+    }
+}
+
+void test_switch() {
+    // case-label 必须为整型 或枚举类型 常量表达式
+    unsigned vowel_cnt = 0, other_cnt = 0;
+    char ch;
+    while (cin >> ch) {
+        // if ch is a vowel, increment the appropriate counter
+        // case 下面的 break不能忘
+        switch (ch) {
+            // case 'a':
+            // case 'e':
+            // case 'i':
+            // case 'o':
+            // case 'u':
+            //     ++vowel_cnt;
+            //     break;
+            case 'a': case 'e': case 'i': case 'o': case 'u':
+                ++vowel_cnt;
+                break;
+            default:
+                ++other_cnt;
+                break;
+        }
+
+    }
+    cout << "Total vowel cnt : " << vowel_cnt << endl;
+}
+
+void q_5_9() {
+    unsigned a_cnt = 0, e_cnt = 0, i_cnt = 0, o_cnt = 0, u_cnt = 0;
+    char ch;
+    while (cin >> ch) {
+        if (ch == 'a') {
+            ++a_cnt;
+        } else if (ch == 'e') {
+            ++e_cnt;
+        } else if (ch == 'i') {
+            ++i_cnt;
+        } else if (ch == 'o') {
+            ++o_cnt;
+        } else if(ch == 'u') {
+            ++u_cnt;
+        }
+    }
+    cout << "Number of vowel a: \t" << a_cnt << '\n'
+        << "Number of vowel e: \t" << e_cnt << '\n'
+        << "Number of vowel i: \t" << i_cnt << '\n'
+        << "Number of vowel o: \t" << o_cnt << '\n'
+        << "Number of vowel u: \t" << u_cnt << endl;
+}
+
+void q_5_10() {
+    unsigned aCnt = 0, eCnt = 0, iCnt = 0, oCnt = 0, uCnt = 0;
+    char ch;
+    while (cin >> ch)
+        switch (ch)
+        {
+            case 'a':
+            case 'A':
+                ++aCnt;
+                break;
+            case 'e':
+            case 'E':
+                ++eCnt;
+                break;
+            case 'i':
+            case 'I':
+                ++iCnt;
+                break;
+            case 'o':
+            case 'O':
+                ++oCnt;
+                break;
+            case 'u':
+            case 'U':
+                ++uCnt;
+                break;
+        }
+
+    cout << "Number of vowel a(A): \t" << aCnt << '\n'
+        << "Number of vowel e(E): \t" << eCnt << '\n'
+        << "Number of vowel i(I): \t" << iCnt << '\n'
+        << "Number of vowel o(O): \t" << oCnt << '\n'
+        << "Number of vowel u(U): \t" << uCnt << endl;
+
+}
+
+void q_5_24() {
+    int i, j;
+    cin >> i >> j;
+    if (j == 0) {
+        throw runtime_error("divisor is 0");
+    }
+    cout << i / j << endl;
+}
+
+void q_5_25() {
+    for (int i, j; cout << "Input two integers: \n"; cin >> i >> j) {
+        try {
+            if (j == 0) {
+                throw runtime_error("divisor is 0");
+            }
+            cout << "Result ： " << i / j << endl;
+
+
+        } catch (const runtime_error& err) {
+            cout << err.what() << "\n Try again? Enter y or n" << endl;
+            char c;
+            cin >> c;
+            if (!cin || c == 'n') break;
+        }
+    }
+}
+
 
 int main() {
     // TIP Press <shortcut actionId="RenameElement"/> when your caret is at the
@@ -808,6 +1099,23 @@ int main() {
     vector<int> vec{1, 2, 3, 10, 11, 22, 34};
     // auto index = binary_search(num, vec);
     // cout << "index of 10 : " << index << endl;
+    q_5_25();
+    // q_5_24();
+    // q_5_10();
+    // q_5_9();
+    // test_switch();
+    // q_5_6();
+    // test_casting();
+    q_4_28();
+    q_4_29();
+    test_size_of();
+    q_4_26();
+    int grade = 95;
+    cout << "Final grafe of " << grade << " : "  << test_conditional_operator(grade) << endl;
+    grade = 52;
+    cout << "Final grafe of " << grade << " : "  << test_conditional_operator(grade) << endl;
+    test_dereference_increment();
+    q_4_13();
     test_multi_dimension_array();
     q_3_40();
     q_3_39();
