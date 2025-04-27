@@ -3,8 +3,8 @@
 #include <cstring>
 #include <cctype>
 #include <vector>
-#include <opencv2/core.hpp>
-#include "Sales_item.h"
+// #include <opencv2/core.hpp>
+#include "cpp_source/ch01/Sales_item.h"
 
 using std::cout;
 using std::cin;
@@ -15,6 +15,7 @@ using std::vector;
 using std::begin;
 using std::end;
 using std::runtime_error;
+using std::pair;
 
 // TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
 // click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
