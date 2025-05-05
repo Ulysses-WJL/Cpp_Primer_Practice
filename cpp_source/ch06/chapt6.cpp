@@ -7,7 +7,7 @@
 #include <cctype>
 #include <vector>
 #include <cstdio>
-#include "chapt6.h"
+#include "Chapter6.h"
 
 #include <algorithm>
 
@@ -229,6 +229,50 @@ bool str_subrange(const string &str1, const string &str2)
     return true;
 }
 
+void test_return_pointer_to_array() {
+    // 使用type alias
+    using arrT = int[10];  // typedef int arrT[10];
+    arrT* func(int i);  // 返回一个 指向含有10个int的array 的指针
+
+    // 不使用type alias
+    int arr[10];
+    int *p1[10];  // p1 含有10个指针的array
+    int (*p2)[10] = &arr;  // p2 指针， 指向含有10个int的array
+
+    // Type (*function(parameter_list))[dimension]
+    int (*func2(int i))[10];
+
+    // 使用 trailing return
+    auto func3(int i) -> int(*)[10];
+}
+
+// 使用 decltype
+int odd[] = {1, 3, 5, 7, 9};
+int even[] = {2, 4, 6, 8, 10};
+// decltype 推断指向的对象和odd相同， 手动添加* 表示返回的是一个指针
+decltype(odd) *arrPtr(int i) {
+    return (i % 2) ? &odd : &even;
+}
+
+void q_6_37() {
+    // unction that returns a reference to an array
+    // of ten strings
+    string s[10];
+    string (&func(int i))[10];
+
+
+    using arrS = string[10];
+
+    arrS& func1(int i);
+
+    auto func3(int i) -> string(&)[10];
+
+    decltype(s) &func2(int i);
+}
+
+decltype(odd) &q_6_38(int i) {
+    return (i % 2) ? odd : even;
+}
 
 int main(int argc, char *argv[]) {
     for (const auto &s: test_list_initializing_return("actual") )
