@@ -1,5 +1,5 @@
 //
-// Created by w30065676 on 2025/4/28.
+// 
 //
 #include <iostream>
 #include <cstdlib>
