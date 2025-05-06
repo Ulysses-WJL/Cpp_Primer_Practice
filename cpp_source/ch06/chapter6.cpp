@@ -1,5 +1,5 @@
 //
-// 
+//
 //
 #include <iostream>
 #include <cstdlib>
@@ -14,6 +14,7 @@
 
 using std::cout;
 using std::cin;
+using std::cerr;
 using std::endl;
 using std::string;
 using std::vector;
@@ -232,7 +233,7 @@ bool str_subrange(const string &str1, const string &str2)
 void test_return_pointer_to_array() {
     // 使用type alias
     using arrT = int[10];  // typedef int arrT[10];
-    arrT* func(int i);  // 返回一个 指向含有10个int的array 的指针
+    arrT* func1(int i);  // 返回一个 指向含有10个int的array 的指针
 
     // 不使用type alias
     int arr[10];
@@ -258,23 +259,185 @@ void q_6_37() {
     // unction that returns a reference to an array
     // of ten strings
     string s[10];
-    string (&func(int i))[10];
+    string (&func_1_1(int i))[10];
 
 
     using arrS = string[10];
 
-    arrS& func1(int i);
+    arrS& func_2_1(int i);
 
-    auto func3(int i) -> string(&)[10];
+    auto func_2_2(int i) -> string(&)[10];
 
-    decltype(s) &func2(int i);
+    decltype(s) &func_2_3(int i);
 }
 
 decltype(odd) &q_6_38(int i) {
     return (i % 2) ? odd : even;
 }
 
+typedef string::size_type sz;
+string screen(sz ht = 24, sz wid = 80, char backgrnd = ' ') {
+    string res = "";
+    res += ht;
+    res += " ";
+    res += wid;
+    res += " ";
+    res += backgrnd;
+    res += "\n";
+    return res;
+}
+
+void test_default_arguments() {
+    // 一旦某个形参被赋予了默认值，那么它之后的形参都必须要有默认值。
+
+    ;
+    string window;
+    // 默认参数用于调用的尾部（最右侧）参数。
+    window = screen('?');  // calls screen('?',80, '')
+    cout << window << endl;
+}
+
+// 编译器会直接将函数的代码插入到调用处，而不是通过常规的函数调用指令（如call或ret）。这样可以避免函数调用的开销
+// 仅对小函数使用：函数体应简单（如几行代码），避免循环或复杂逻辑。
+// 高频调用优先：对循环内或关键路径上的函数内联效果更明显。
+// 依赖编译器优化：现代编译器可能自动内联未标记的函数，可先测试性能再决定是否显式标记。
+// 头文件放置：内联函数定义应放在头文件中，确保所有调用点可见。
+inline const string &test_inline_shorter(const string &s1, const string &s2) {
+    return (s1.size() < s2.size()) ? s1 : s2;
+}
+
+
+constexpr int new_size(){return 42;}
+
+void test_constexpr_func() {
+    // implicitly inline. 返回值和参数 都要是 literal type
+    // replace a call to a constexpr function with its resulting value
+    constexpr int func_size = new_size();
+}
+
+constexpr int factorial(int n) {
+    return n <= 1 ? 1 : n * factorial(n - 1);
+}
+
+constexpr int fib(int n) {
+    if (n <= 1) return n;
+    int a = 0, b = 1;
+    for (int i = 1; i < n; ++i) {
+        int next = a + b;
+        a = b;
+        b = next;
+    }
+    return b;
+}
+
+void print(){
+#ifndef NDEBUG  // 非调试状态  g++ -D NDEBUG
+    cerr << __func__ << "..." << endl;
+#endif
+}
+
+void f()
+{
+    cout << "f()" << endl;
+}
+
+void f(int)
+{
+    cout << "f(int)" << endl;
+}
+
+void f(int, int)
+{
+    cout << "f(int, int)" << endl;
+}
+
+void f(double, double)
+{
+    cout << "f(double, double)" << endl;
+}
+
+void q_6_51() {
+    // f(2.56, 42); // error: 'f' is ambiguous.
+    f(42);
+    f(42, 0);
+    f(2.56, 3.14);
+
+}
+
+void test_pointer_to_function() {
+    bool (*pf)(const string &, const string &);
+    pf = is_shorter;  // 使用函数名时， 转为指针
+    // pf = &is_shorter;
+    bool b1 = pf("aaa", "cc");
+    bool b2 = (*pf)("zzz", "sdc");
+    bool b3 = is_shorter("hello", "hi");
+}
+
+// Func and Func2 have function type
+typedef bool Func(const string&, const string&);
+typedef decltype(is_shorter) Func2; // equivalent type
+// FuncP and FuncP2 have pointer to function type
+typedef bool(*FuncP)(const string&, const string&);
+typedef decltype(is_shorter) *FuncP2; // equivalent type
+using FuncP3 = decltype(&is_shorter);
+
+void useBigger(const string &s1, const string &s2,
+            // bool pf(const string &, const string &)
+            // bool (*pf)(const string &, const string &)
+            FuncP3 pf
+) {
+    bool b1 = pf(s1, s2);
+    cout << "result :" << b1 << endl;
+}
+
+void test_func_pointer_parameters() {
+    useBigger("hello", "world", is_shorter);
+}
+
+
+void test_return_pointer_to_func() {
+    using F = int(int *, int);  // F is a function type,
+    using PF = int (*) (int *, int);  // pointer type
+    // 返回值不会自动转为指针，需要显式声明
+    PF f1(int);
+    F *f2(int);
+    // 返回的函数的返回值类型 (*函数名(函数参数)) (返回的函数的参数类型)
+    int (*f3(int)) (int *, int);
+    auto f4(int) -> int (*)(int *, int);  // trailing return
+
+    // 使用decltype
+    string::size_type sumLength(const string&, const string&);
+    string::size_type largerLength(const string&, const string&);
+    // depending on the value of its string parameter,
+    // getFcn returns a pointer to sumLength or to largerLength
+    decltype(sumLength) *getFcn(const string &); // * 不能遗漏
+}
+
+int add(int a, int b) {return a + b;}
+int subtract(int a, int b) {return a - b;}
+int multiply(int a, int b) {return a * b;}
+int divide(int a, int b) {return b == 0 ? 0 : a / b;}
+void q_6_54() {
+    int func(int, int);
+    vector<decltype(func) *>vc;
+
+    vc.push_back(add);
+    vc.push_back(subtract);
+    vc.push_back(multiply);
+    vc.push_back(divide);
+    for (auto f: vc) {
+        cout << f(4, 2) << " ";
+    }
+    cout << endl;
+}
+
 int main(int argc, char *argv[]) {
+    q_6_54();
+    q_6_51();
+    print();
+    test_default_arguments();
+    static_assert(factorial(5) == 120);  // 编译期计算
+    static_assert(fib(10) == 55);  // 编译期计算
     for (const auto &s: test_list_initializing_return("actual") )
         cout << s << endl;
     test_reference_return_lvalue();
