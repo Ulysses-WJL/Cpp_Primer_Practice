@@ -5,43 +5,70 @@
 #include <string>
 #include <vector>
 
-#include "libwebsockets.h"
-
-using std::cin; using std::cout; using std::endl; using std::string;
+using std::cin;
+using std::cout;
+using std::vector;
+using std::endl;
+using std::string;
 
 struct Sales_Data;
+
 std::istream &read(std::istream &is, Sales_Data &item);
 
 class Sales_Data {
     // 友元， 当其他类或者函数想要访问当前类的私有变量时，这个时候应该用友元。
     // 友元 影响访问，但不是真正的声明
-    friend std::ostream &print(std::ostream&, const Sales_Data&);
-    friend std::istream &read(std::istream&, Sales_Data&);
-    friend Sales_Data add(const Sales_Data&, const Sales_Data&);
+    friend std::ostream &print(std::ostream &, const Sales_Data &);
+
+    friend std::istream &read(std::istream &, Sales_Data &);
+
+    friend Sales_Data add(const Sales_Data &, const Sales_Data &);
+
 public:
     // constructors
-    Sales_Data() = default;  // 默认构造函数，它不接受任何参数
+    // Sales_Data() = default; // 默认构造函数，它不接受任何参数
     // Constructor Initializer List
-    Sales_Data(const string &s) : bookNo(s) {}  // 带有一个参数的构造函数 初始化bookNo
-    Sales_Data(const string &s, unsigned n, double p) :
-                bookNo(s), units_sold(n), revenue(p * n) {}  // 三个参数的构造函数
-    Sales_Data(std::istream &is) { read(is, *this);};  // 从输入流读取 进行构造
+    // Sales_Data(const string &s) : bookNo(s) {} // 带有一个参数的构造函数 初始化bookNo
+    Sales_Data(const string &s, const unsigned n, const double p) : bookNo(s), units_sold(n), revenue(p * n) {
+        cout << "三个参数" << endl;
+    } // 三个参数的构造函数
+    // Sales_Data(std::istream &is) { read(is, *this);};  // 从输入流读取 进行构造
+    // q_7_38 cin as a default argument to the constructor
+    // Sales_Data(std::istream &is = std::cin) { read(is, *this); };
+
+    // delegating constructor
+    Sales_Data(): Sales_Data("", 0, 0) {
+        cout << "无参数" << endl;
+    }
+    explicit Sales_Data(const string &s) : Sales_Data(s, 0, 0) {
+        cout << "一个参数" << endl;
+    }
+    explicit Sales_Data(std::istream &is): Sales_Data() {
+        read(is, *this);
+        cout << "istream 初始化" << endl;
+    }
+
     // member function
     // this 是const pointer 指向nonconst， 添加const 不修改对象的任何非静态成员变量
     // （即 this 指针指向的对象的状态不会被改变）。
     //非const 函数，不能被 const 对象调用
-    string isbn() const {return bookNo;}  // this->bookNo
-    Sales_Data& combine(const Sales_Data&);
+    string isbn() const { return bookNo; } // this->bookNo
+    Sales_Data &combine(const Sales_Data &);
+
     double avg_price() const;
+
 private:
     string bookNo;
-    unsigned units_sold = 0;  // in-class initializer 无需通过构造函数初始化
+    unsigned units_sold = 0; // in-class initializer 无需通过构造函数初始化
     double revenue = 0.0;
 };
+
 // nonmember Sales_data interface functions
-Sales_Data add(const Sales_Data&, const Sales_Data&);
-std::ostream &print(std::ostream&, const Sales_Data&);
-std::istream &read(std::istream&, Sales_Data&);
+Sales_Data add(const Sales_Data &, const Sales_Data &);
+
+std::ostream &print(std::ostream &, const Sales_Data &);
+
+std::istream &read(std::istream &, Sales_Data &);
 
 // Sales_Data::Sales_Data(std::istream &is) {
 //     read(is, *this);
@@ -55,7 +82,7 @@ double Sales_Data::avg_price() const {
 Sales_Data &Sales_Data::combine(const Sales_Data &rhs) {
     units_sold += rhs.units_sold;
     revenue += rhs.revenue;
-    return *this;  // return the object on which the function was called
+    return *this; // return the object on which the function was called
 }
 
 std::istream &read(std::istream &is, Sales_Data &item) {
@@ -67,7 +94,7 @@ std::istream &read(std::istream &is, Sales_Data &item) {
 
 std::ostream &print(std::ostream &os, const Sales_Data &item) {
     os << item.isbn() << " " << item.units_sold << " "
-        << item.revenue << " " << item.avg_price();
+            << item.revenue << " " << item.avg_price();
     return os;
 }
 
@@ -78,16 +105,18 @@ Sales_Data add(const Sales_Data &item1, const Sales_Data &item2) {
 }
 
 class Person {
-private:  // 在public前的默认是 private， 在struct里第一个access specifier前的就是public
+private: // 在public前的默认是 private， 在struct里第一个access specifier前的就是public
     string name;
     string address;
+
 public:
-    auto get_name() const -> string const& {return name;}
-    string const &get_address() const {return address;}
+    auto get_name() const -> string const & { return name; }
+    string const &get_address() const { return address; }
     void set_name(const std::string &n) { name = n; }
     void set_address(const std::string &a) { address = a; }
     // Person(const string &n, const string &a) {name = n; address = a;}  // 先构造再赋值
-    Person(const string n, const string a) : name(n), address(a) {}  // 使用初始化列表
+    Person(const string n, const string a) : name(n), address(a) {
+    } // 使用初始化列表
 };
 
 std::istream &read(std::istream &is, Person &person) {
@@ -145,11 +174,11 @@ std::ostream &print(std::ostream &os, const Person &person) {
 //     return 0;
 // }
 
-int q_7_7(){
+int q_7_7() {
     Sales_Data total;
     if (read(cin, total)) {
         Sales_Data trans;
-        while(read(cin, trans)) {
+        while (read(cin, trans)) {
             if (total.isbn() == trans.isbn()) {
                 total.combine(trans);
             } else {
@@ -184,41 +213,61 @@ class Screen;
 class WindowMgr {
 public:
     using ScreenIndex = std::vector<Screen>::size_type;
+
     inline void clear(ScreenIndex);
-    ScreenIndex addScreen(const Screen&);
+
+    ScreenIndex addScreen(const Screen &);
+
 private:
     std::vector<Screen> screens;
 };
 
 class Screen {
-    friend void WindowMgr::clear(WindowMgr::ScreenIndex);  // 友元
+    friend void WindowMgr::clear(WindowMgr::ScreenIndex); // 友元
 public:
     // type members 先定义
     using pos = std::string::size_type;
-    Screen() = default;  // 有其他构造函数时，需要显式声明一个default
-    Screen(pos ht, pos wd) : height(ht), width(wd) {}
-    Screen(pos ht, pos wd, char c) : height(ht), width(wd), contents(ht*wd, c) {}
-    char get() const {return contents[cursor];}  // 类内定义 是内联
+
+    Screen() = default; // 有其他构造函数时，需要显式声明一个default
+    Screen(pos ht, pos wd) : height(ht), width(wd) {
+    }
+
+    Screen(pos ht, pos wd, char c) : height(ht), width(wd), contents(ht * wd, c) {
+    }
+
+    char get() const { return contents[cursor]; } // 类内定义 是内联
     // overload member function
-    inline char get(pos ht, pos wd) const;  // explicitly inline
+    inline char get(pos ht, pos wd) const; // explicitly inline
     Screen &mov(pos r, pos c);
+
     void some_member() const;
+
     Screen &set(char);
+
     Screen &set(pos, pos, char);
-    Screen &display(std::ostream &os) {do_display(os); return *this;}
-    const Screen &display(std::ostream &os) const {do_display(os); return *this;}
+
+    Screen &display(std::ostream &os) {
+        do_display(os);
+        return *this;
+    }
+
+    const Screen &display(std::ostream &os) const {
+        do_display(os);
+        return *this;
+    }
+
     // error: extra qualification ‘Screen::’ on member ‘size’ [-fpermissive]
     // pos Screen::size() const
-    pos size() const
-    {
+    pos size() const {
         return height * width;
     }
+
 private:
     pos cursor = 0;
     pos height = 0, width = 0;
     std::string contents;
-    mutable size_t access_ctr;  // may change even in a const object
-    void do_display(std::ostream &os) const {os << contents;}
+    mutable size_t access_ctr; // may change even in a const object
+    void do_display(std::ostream &os) const { os << contents; }
 };
 
 // 返回值类型 指定class
@@ -233,8 +282,7 @@ void WindowMgr::clear(ScreenIndex index) {
     s.contents = string(s.height * s.width, ' ');
 }
 
-void Screen::some_member() const
-{
+void Screen::some_member() const {
     ++access_ctr; // keep a count of the calls to any member function
     // whatever other work this member needs to do
 }
@@ -277,18 +325,21 @@ void q_7_31() {
 
 //q_7_35
 typedef string Type;
+
 Type initVal(); // use `string`
 class Exercise {
 public:
     typedef double Type;
+
     Type setVal(Type); // use `double`
-    Type initVal(); // use `double`
+    Type initVal() {val = 0; return 0.1;}; // use `double`
 private:
     int val;
 };
 
-Exercise::Type Exercise::setVal(Type parm) {  // first is `string`, second is `double`
-    val = parm + initVal();     // Exercise::initVal()
+Exercise::Type Exercise::setVal(Type parm) {
+    // first is `string`, second is `double`
+    val = parm + initVal(); // Exercise::initVal()
     return val;
 }
 
@@ -296,6 +347,7 @@ Exercise::Type Exercise::setVal(Type parm) {  // first is `string`, second is `d
 class ConstRef {
 public:
     ConstRef(int ii);
+
 private:
     int i;
     const int ci;
@@ -303,24 +355,89 @@ private:
 };
 
 // const、引用或没有默认构造函数的类类型的成员, 需要使用constructor
-ConstRef::ConstRef(int ii) : i(ii), ci(ii), ri(ii) {}
+ConstRef::ConstRef(int ii) : i(ii), ci(ii), ri(ii) {
+}
 
 void test_initialize_order() {
     class X {
         int i;
         int j;
+
     public:
+        // 按照member出现的顺序进行初始化
         // undefined: i is initialized before j
-        X(int val): j(val), i(j) { }
+        X(int val): j(val), i(j) {
+        }
     };
 }
 
+
+// q_7_40
+class Book {
+public:
+    Book(const string &author, const string &name, const string publish_date, const unsigned isbn) : author_(author),
+        name_(name), isbn_(isbn), publish_date_(publish_date) {}
+    // 编译器不会自动将其他类型转换为该类型。这可以防止意外的类型转换导致的错误。
+    explicit Book(std::istream &is) {
+        is >> isbn_ >> author_ >> name_ >> publish_date_;
+    }
+    explicit Book(const unsigned isbn) : Book("", "", "", isbn) {}
+
+private:
+    string author_;
+    string name_;
+    unsigned isbn_{};
+    string publish_date_;
+};
+
+void q_7_41() {
+    cout << "===============================" << endl;
+    Sales_Data sale1("sale1", 5, 0.5);
+    cout << "===============================" << endl;
+    // Declarator is disambiguated as a function declaration. Make sure a variable definition is not intended instead.
+    // 定义的是一个函数 而不是object
+    // Sales_Data sale_2();
+    Sales_Data sale2;
+    cout << "===============================" << endl;
+    Sales_Data sale3("sale3");
+    cout << "===============================" << endl;
+    Sales_Data sale4(cin);
+    cout << "===============================" << endl;
+}
+
+// q_7_43
+class NoDefault {
+public:
+    explicit NoDefault(const int a) : val(a) {cout << "NoDefault 定义： " << val << endl; }
+private:
+    int val;
+};
+
+class C {
+public:
+    explicit C() : no_default_(0) {cout << "c 定义： " << endl;}
+private:
+    NoDefault no_default_;
+};
+
+void q_7_43() {
+    C c(5);
+}
+
+void q_7_44() {
+    // NoDefault没有默认构造函数
+    // vector<NoDefault> vec(10);  // 10个元素
+}
+
 int main() {
+    q_7_44();
+    q_7_43();
+    q_7_41();
     Screen::pos ht = 24, wd = 80;
     Screen scr(ht, wd, ' ');
     Screen *p = &scr;
     char c = scr.get();
-    c = p->get();  // (*p).get();
+    c = p->get(); // (*p).get();
 
     Screen my_screen(8, 6, 'X');
     const Screen blank(5, 3);
