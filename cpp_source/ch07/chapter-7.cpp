@@ -40,9 +40,11 @@ public:
     Sales_Data(): Sales_Data("", 0, 0) {
         cout << "无参数" << endl;
     }
-    explicit Sales_Data(const string &s) : Sales_Data(s, 0, 0) {
+    Sales_Data(const string &s) : Sales_Data(s, 0, 0) {
         cout << "一个参数" << endl;
     }
+    // single argument 才能使用explict防止隐式转换
+    // 只能使用direct initialization ，不能使用copy form
     explicit Sales_Data(std::istream &is): Sales_Data() {
         read(is, *this);
         cout << "istream 初始化" << endl;
@@ -117,6 +119,9 @@ public:
     // Person(const string &n, const string &a) {name = n; address = a;}  // 先构造再赋值
     Person(const string n, const string a) : name(n), address(a) {
     } // 使用初始化列表
+    explicit Person(std::istream &is) {read(is, *this); }
+    std::istream &read(std::istream &is, Person &person);
+    std::ostream &print(std::ostream &os, const Person &person);
 };
 
 std::istream &read(std::istream &is, Person &person) {
@@ -421,7 +426,7 @@ private:
 };
 
 void q_7_43() {
-    C c(5);
+    C c;
 }
 
 void q_7_44() {
@@ -429,10 +434,143 @@ void q_7_44() {
     // vector<NoDefault> vec(10);  // 10个元素
 }
 
+void test_implicated_constructor() {
+    // Sales_Data(const string &s) 非 explicit
+    string null_book = "9-999-99999-9";
+    Sales_Data item("9-999-99999-9", 5, 0.5);
+    item.combine(null_book);  // 使用Sales_Data(const string &s) 将string转为了Sales_Data
+    print(cout, item) << endl;
+
+    // ok: explicit conversion to string, implicit conversion to Sales_data
+    item.combine(string("9-999-99999-9"));
+    // ok: implicit conversion to string, explicit conversion to Sales_data
+    item.combine(Sales_Data("9-999-99999-9"));
+    // static_cast can use an explicit constructor
+    item.combine(static_cast<Sales_Data>(cin));
+    print(cout, item) << endl;
+}
+
+void test_string_add(const string &str1, const string &str2) {
+    cout << "str1: " << str1 << endl;
+    cout << "str2: " << str2 << endl;
+    cout << str1 + str2 << endl;
+}
+
+void q_7_49() {
+    // Sales_Data &combine(Sales_Data); // ok
+    // Sales_Data &combine(Sales_Data&); // error C2664: 无法将参数 1 从“std::string”转换为“Sales_data &”	因为隐式转换只有一次
+    // Sales_Data &combine(const Sales_Data&) const; // 该成员函数是const 的，意味着不能改变对象。而 combine函数的本意就是要改变对象
+}
+
+void test_aggregate_class() {
+    // members public
+    // no constructors
+    // no in-class initializer
+    // no base class or virtual functions
+    struct Data {
+        int val;
+        string s;
+    };
+    Data val1 = {0, "Tom"};
+}
+
+// literal class
+class Debug {
+public:
+    // 至少一个 constexpr constructor
+    constexpr Debug(bool b = true) : hw(b), io(b), other(b) { }
+    constexpr Debug(bool h, bool i, bool o) : hw(h), io(i), other(o) { }
+
+    // 添加 const  允许在 const 对象上调用该方法
+    constexpr bool any() const { return hw || io || other; }
+    void set_hw(bool b) { hw = b; }
+    void set_io(bool b) { io = b; }
+    void set_other(bool b) { other = b; }
+
+private:
+    // member都是 literal type
+    bool hw;        // runtime error
+    bool io;        // I/O error
+    bool other;     // the others
+};
+
+void test_literal_class() {
+
+    constexpr Debug io_sub(false, true, false); // debugging IO
+    if (io_sub.any()) // equivalent to if(true)
+        std::cerr << "print appropriate error messages" << endl;
+    constexpr Debug prod(false); // no debugging during production
+    if (prod.any()) // equivalent to if(false)
+        std::cerr << "print an error message" << endl;
+
+}
+
+class Point {
+public:
+    constexpr Point(double x, double y) : x_(x), y_(y) {}
+    constexpr double getX() const { return x_; }
+    constexpr double getY() const { return y_; }
+
+private:
+    double x_;
+    double y_;
+};
+
+// static class members
+class Account {
+public:
+    void calculate() {amount += amount * interest_rate;}
+    static void rate(double);
+    static double rate() {return interest_rate;};
+
+private:
+    std::string owner;
+    double amount;
+    // associated with the class, rather than with individual objects
+    static double interest_rate;
+    static double init_rate();
+    static constexpr int period = 30;  // 只有integral type的static member 可以在类内 初始化
+    double daily_tbl[period];
+};
+
+double Account::init_rate() {
+    return 0.01;
+}
+
+void Account::rate(double r) {
+    interest_rate = r;
+}
+
+// 定义静态成员变量, 必须在类外进行定义，确保它在任何地方都能被访问。
+double Account::interest_rate = init_rate(); // 进行定义
+constexpr int Account::period;  // 类里面初始化了，也应该在类外定义
+
+
+void test_static_member() {
+    double r;
+    Account::rate(0.1);
+    r = Account::rate();
+    cout << "rate: " << r << endl;
+    Account ac1;
+    Account *ac2 = &ac1;
+    r = ac1.rate();
+    r = ac2->rate();
+}
+
+
 int main() {
+    test_static_member();
+    constexpr Point p2(1.0, 2.0);
+    constexpr double x = p2.getX(); // 编译时计算
+    test_literal_class();
+    cout << x << endl;
+    string s1 = "xxxx";
+    const char c1 = 'a';
+    test_string_add(s1, &c1);
+    // test_implicated_constructor();
     q_7_44();
     q_7_43();
-    q_7_41();
+    // q_7_41();
     Screen::pos ht = 24, wd = 80;
     Screen scr(ht, wd, ' ');
     Screen *p = &scr;
