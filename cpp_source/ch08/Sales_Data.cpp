@@ -1,7 +1,7 @@
-#include "ex_7_41.h"
+#include "Sales_Data.h"
 
 // constructor
-Sales_Data::Sales_data(std::istream &is) : Sales_Data()
+Sales_Data::Sales_Data(std::istream &is) : Sales_Data()
 {
     std::cout << "Sales_data(istream &is)" << std::endl;
     read(is, *this);

@@ -199,16 +199,209 @@ void test_emplace() {
 
     // 创建了临时对象
     c.push_back(Sales_Data("aaa", 10, 1.5));
+    c.emplace_back();  // 使用默认的构造函数
 
     for (auto &item : c) {
         print(cout, item) << "\n";
-
     }
 }
 
+void q_9_18() {
+    string temp;
+    deque<string> dq;
+    while (cin >> temp) {
+        dq.push_front(temp);
+    }
+    for (auto &item : dq) {
+        cout << item << " ";
+    }
+    cout << "\n";
+}
+
+void q_9_20() {
+    list<int> ilst{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    deque<int> dq_even, dq_odd;
+    // for (auto &item : ilst) {
+    //     if (item % 2 == 0) {
+    //         dq_even.push_back(item);
+    //     } else {
+    //         dq_odd.push_back(item);
+    //     }
+    // }
+    for (auto &item : ilst) {
+        ((item & 0x01) ? dq_odd : dq_even).push_back(item);
+    }
+    cout << "=============even===========\n";
+    for (auto &item : dq_even) {
+        cout << item << " ";
+    }
+    cout << "\n";
+    cout << "=============odd===========\n";
+    for (auto &item : dq_odd) {
+        cout << item << " ";
+    }
+    cout << "\n";
+}
+
+void q_9_21() {
+    int i;
+    vector<int> ivec1;
+    auto iter = ivec1.begin();
+    while (cin >> i)
+        // 使用返回的迭代器 进行插入   == push_front
+        // 将一个新元素插入到 iter 之前，并将 iter 改变为新加入元素的位置
+        iter = ivec1.insert(iter, i);
+}
+
+void q_9_22() {
+    vector <int> iv{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    int some_value = 2;
+    vector<int>::iterator iter = iv.begin(), mid = iv.begin() + iv.size()/2;
+    while (iter != mid) {
+        if (*iter == some_value)
+            iv.insert(iter, 2 * some_value);
+        ++iter;
+    }
+    for (auto &item : iv) {
+        cout << item << " ";
+    }
+    cout << "\n";
+}
+
+void test_access() {
+    vector<int> ivec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    if (!ivec.empty()) {  // 总是先check 是否为空
+        // 起始
+        auto val = *ivec.begin(), val2 = ivec.front();
+        // 结束
+        auto last = ivec.end();  // 结尾的后一个 nonexistent
+        auto val3 = *(--last);
+        auto &val4 = ivec.back();  // 使用reference change value
+        val4 = 1024;
+        auto val5 = ivec.at(ivec.size() - 1);
+        // auto val6 = ivec.at(10);  // at 越界会报 'std::out_of_range'
+        cout << val << " " << val2 << " " << ivec[0] << "\n";
+        cout << val3 << " " << val5 << " " <<  ivec[9] << "\n";
+    }
+}
+
+void test_erase() {
+    vector <int> ivec = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    while (!ivec.empty()) {
+        ivec.pop_back();
+    }
+    cout << ivec.size() << "\n";
+
+    list<int> lst = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+    auto it = lst.begin();
+    while (it != lst.end()) {
+        if (*it & 0x01) {
+            it = lst.erase(it);  // 清除it 并返回下一个
+        } else {
+            ++it;
+        }
+    }
+
+    vector<string> svec = {"a", "b", "c", "d", "e", "f"} ;
+    auto it1 = svec.begin();
+    // one past the last element we want to remove
+    auto it2 = svec.begin() + 3;
+    svec.erase(it1, it2);
+    for (auto &item : svec) {
+        cout << item << " ";
+    }
+    cout << "\n";
+
+    svec.clear();
+    // svec.erase(svec.begin(), svec.end());
+}
+
+void q_9_26() {
+    int ia[] = {0, 1, 1, 2, 3, 5, 8, 13, 21, 55, 89};
+    vector<int> ivec(std::begin(ia), std::end(ia));
+    list<int> ilst(std::begin(ia), std::end(ia));
+    auto it = ivec.begin();
+    while (it != ivec.end()) {
+        if (*it & 0x01) {
+            it = ivec.erase(it);
+        } else {
+            ++it;
+        }
+
+    }
+
+    for (auto item : ivec) {
+        cout << item << " ";
+    }
+    cout << "\n";
+
+    auto it1 = ilst.begin();
+    while (it1 != ilst.end()) {
+        if (*it1 & 0x01) {
+            it1 = ilst.erase(it1);
+        } else {
+            ++it1;
+        }
+    }
+
+    for (auto item : ilst) {
+        cout << item << " ";
+    }
+    cout << "\n";
+}
+
+void test_forward_list_erase() {
+    forward_list<int> flst = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+    auto prev = flst.before_begin();
+    auto curr = flst.begin();
+    while (curr != flst.end()) {
+        if (*curr & 0x01) {
+            // 删去prev的下一个（curr）, 返回 curr的下一个元素
+            curr = flst.erase_after(prev);
+        } else {
+            prev = curr;
+            ++curr;
+        }
+    }
+
+    for (auto &item : flst) {
+        cout << item << " ";
+    }
+    cout << endl;
+}
+
+void q_9_27(forward_list<string> &fst, const string &str, const string &str2) {
+    auto prev = fst.before_begin();
+    auto curr = fst.begin();
+    while (curr != fst.end()) {
+        if (*curr == str) {
+            // 返回iterator to the last inserted element
+            fst.insert_after(curr, str2);
+            return;
+        }
+        prev = curr;
+        ++curr;
+    }
+    // prev 是最后一个元素
+    fst.insert_after(prev, str2);
+}
+
 int main(int argc, char **argv) {
+    forward_list<string> fst = {"a", "b", "c", "d", "e", "f"};
+    q_9_27(fst, "c", "find");
+    for (auto &item : fst) {
+        cout << item << " ";
+    }
+    cout << "\n";
+    test_forward_list_erase();
+    q_9_26();
+    test_erase();
+    test_access();
+    q_9_22();
+    q_9_20();
+    // q_9_18();
     test_emplace();
-    test_return_from_insert();
+    // test_return_from_insert();
     test_push_char();
     q_9_16();
     q_9_15();
