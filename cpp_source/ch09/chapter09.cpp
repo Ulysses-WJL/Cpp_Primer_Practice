@@ -1,5 +1,6 @@
 #include <array>
 #include <deque>
+#include <filesystem>
 #include <forward_list>
 #include <iostream>
 #include <list>
@@ -386,7 +387,127 @@ void q_9_27(forward_list<string> &fst, const string &str, const string &str2) {
     fst.insert_after(prev, str2);
 }
 
+void q_9_31() {
+    // silly loop to remove even-valued elements and insert a duplicate of odd-valued elements
+    list<int> l = {0,1,2,3,4,5,6,7,8,9};
+    auto iter = l.begin(); // call begin, not cbegin because we’re changing vi
+    while (iter != l.end()) {
+        if (*iter % 2) {
+            iter = l.insert(iter, *iter); // duplicate the current element
+            // 复合赋值语句只能用于string、vector、deque、array
+            // iter += 2; // advance past this element and the one inserted before it
+            ++iter;
+            ++iter;
+        } else
+            iter = l.erase(iter); // remove even elements
+        // don’t advance the iterator; iter denotes the element after the one we erased
+    }
+    for (auto &item : l) {
+        cout << item << " ";
+    }
+    cout << endl;
+}
+
+void q_9_31_forward_list() {
+    // silly loop to remove even-valued elements and insert a duplicate of odd-valued elements
+    forward_list<int> l = {0,1,2,3,4,5,6,7,8,9};
+    // auto prev = l.before_begin();
+    // auto curr = l.begin();
+    // while (curr != l.end()) {
+    //     if (*curr & 0x01) {
+    //         // 0 后面插入1， curr指向插入的1
+    //         curr = l.insert_after(prev, *curr);
+    //         // curr 指向 2
+    //         ++curr;
+    //         ++curr;
+    //         // prev 指向第二个1
+    //         ++prev;
+    //         ++prev;
+    //     } else {
+    //         curr = l.erase_after(prev);
+    //     }
+    //
+    // }
+    for (auto curr = l.begin(), prev = l.before_begin(); curr != l.end(); ) {
+        if (*curr & 0x01) {
+            curr = l.insert_after(prev, *curr);
+
+            std::advance(curr, 2);
+            std::advance(prev, 2);
+        } else {
+            curr = l.erase_after(prev);
+        }
+    }
+    for (auto &item : l) {
+        cout << item << " ";
+    }
+    cout << endl;
+}
+
+void q_9_33() {
+    vector<int> v{ 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    auto begin = v.begin();
+    while (begin != v.end()) {
+        ++begin;
+        //v.insert(begin, 42); // begin 会失效  the iterator is invalid after inserting.
+        begin = v.insert(begin, 42);
+        ++begin;
+    }
+
+    for (auto i : v)
+        cout << i << " ";
+}
+
+void q_9_34() {
+    vector<int> vi{0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    for (auto iter = vi.begin(); iter != vi.end(); ++iter) {
+        if (*iter & 0x01) {
+            iter = vi.insert(iter, *iter), ++iter;
+        }
+    }
+}
+
+void test_capacity_size() {
+    vector<int> ivec;
+    // size should be zero; capacity is implementation defined
+    cout << "ivec: size: " << ivec.size()
+    << " capacity: " << ivec.capacity() << endl;
+    // give ivec 24 elements
+    for (vector<int>::size_type ix = 0; ix != 24; ++ix)
+        ivec.push_back(ix);
+    // size should be 24; capacity will be >= 24 and is implementation defined
+    cout << "ivec: size: " << ivec.size()
+    << " capacity: " << ivec.capacity() << endl;
+
+    ivec.reserve(50); // sets capacity to at least 50; might be more
+    // size should be 24; capacity will be >= 50 and is implementation defined
+    cout << "ivec: size: " << ivec.size()
+    << " capacity: " << ivec.capacity() << endl;
+
+    // add elements to use up the excess capacity
+    while (ivec.size() != ivec.capacity())
+        ivec.push_back(0);
+    // capacity should be unchanged and size and capacity are now equal
+    cout << "ivec: size: " << ivec.size()
+    << " capacity: " << ivec.capacity() << endl;
+
+    ivec.push_back(42); // add one more element
+    // size should be 51; capacity will be >= 51 and is implementation defined
+    cout << "ivec: size: " << ivec.size()
+    << " capacity: " << ivec.capacity() << endl;
+
+    ivec.shrink_to_fit(); // ask for the memory to be returned
+    // size should be unchanged; capacity is implementation defined
+    cout << "ivec: size: " << ivec.size()
+    << " capacity: " << ivec.capacity() << endl;
+}
+
+
 int main(int argc, char **argv) {
+    test_capacity_size();
+    q_9_33();
+    q_9_31_forward_list();
+    q_9_31();
     forward_list<string> fst = {"a", "b", "c", "d", "e", "f"};
     q_9_27(fst, "c", "find");
     for (auto &item : fst) {
