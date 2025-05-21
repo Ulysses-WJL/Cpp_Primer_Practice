@@ -387,6 +387,48 @@ void q_9_27(forward_list<string> &fst, const string &str, const string &str2) {
     fst.insert_after(prev, str2);
 }
 
+void test_resize() {
+    list<int> ilist(10, 42);
+    ilist.resize(15);  // 元素要有默认构造函数
+    ilist.resize(25, -1);
+    ilist.resize(5);
+}
+
+void test_loop_change_container() {
+    vector<int> vi = {0,1,2,3,4,5,6,7,8,9};
+    auto iter = vi.begin(); // call begin, not cbegin because we’re changing vi
+    while (iter != vi.end()) {
+        if (*iter % 2) {
+            // 1前面插入一个1，iter位置是前一个1
+            iter = vi.insert(iter, *iter); // duplicate the current element
+            //  +2 指向原来的1的后一个（2）
+            iter += 2; // advance past this element and the one inserted before it
+        } else
+            // 删除2， iter指向下一个元素(3)
+            iter = vi.erase(iter); // remove even elements
+        // don’t advance the iterator; iter denotes the element after the one we erased
+    }
+    for (auto &item : vi) {
+        cout << item << " ";
+    }
+    cout << "\n";
+}
+
+
+void test_avoid_store_end() {
+    vector<int> v = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    auto begin = v.begin();
+    while (begin != v.end()) {  // 每次重新计算end
+        ++begin;  // 0 -> 1, 1 -> 2
+        begin = v.insert(begin, 42);  // 在1前面(0后面)插入
+        ++begin;  // 42 -> 1, 42 -> 2
+    }
+    for (auto &item : v) {
+        cout << item << " ";
+    }
+    cout << "\n";
+}
+
 void q_9_31() {
     // silly loop to remove even-valued elements and insert a duplicate of odd-valued elements
     list<int> l = {0,1,2,3,4,5,6,7,8,9};
