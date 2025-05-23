@@ -5,6 +5,8 @@
 #include <iostream>
 #include <list>
 #include <vector>
+#include <string>
+#include <cstring>
 #include "../ch08/Sales_Data.h"
 
 using std::vector;
@@ -513,39 +515,184 @@ void test_capacity_size() {
     vector<int> ivec;
     // size should be zero; capacity is implementation defined
     cout << "ivec: size: " << ivec.size()
-    << " capacity: " << ivec.capacity() << endl;
+         << " capacity: " << ivec.capacity() << endl;
     // give ivec 24 elements
     for (vector<int>::size_type ix = 0; ix != 24; ++ix)
         ivec.push_back(ix);
     // size should be 24; capacity will be >= 24 and is implementation defined
     cout << "ivec: size: " << ivec.size()
-    << " capacity: " << ivec.capacity() << endl;
+         << " capacity: " << ivec.capacity() << endl;
 
     ivec.reserve(50); // sets capacity to at least 50; might be more
     // size should be 24; capacity will be >= 50 and is implementation defined
     cout << "ivec: size: " << ivec.size()
-    << " capacity: " << ivec.capacity() << endl;
+         << " capacity: " << ivec.capacity() << endl;
 
     // add elements to use up the excess capacity
     while (ivec.size() != ivec.capacity())
         ivec.push_back(0);
     // capacity should be unchanged and size and capacity are now equal
     cout << "ivec: size: " << ivec.size()
-    << " capacity: " << ivec.capacity() << endl;
+         << " capacity: " << ivec.capacity() << endl;
 
     ivec.push_back(42); // add one more element
     // size should be 51; capacity will be >= 51 and is implementation defined
     cout << "ivec: size: " << ivec.size()
-    << " capacity: " << ivec.capacity() << endl;
+         << " capacity: " << ivec.capacity() << endl;
 
     ivec.shrink_to_fit(); // ask for the memory to be returned
     // size should be unchanged; capacity is implementation defined
     cout << "ivec: size: " << ivec.size()
-    << " capacity: " << ivec.capacity() << endl;
+         << " capacity: " << ivec.capacity() << endl;
 }
 
 
+void q_9_38() {
+    vector<int> ivec;
+    for (auto i = 0; i != 100; ++i) {
+        ivec.push_back(i);
+        cout << "ivec: size: " << ivec.size() << " capacity: " << ivec.capacity() << endl;
+    }
+}
+
+void test_string_constructor() {
+    const char *cp = "hello world !!!";  // null-terminated array
+    char noNUll [] = {'H', 'i'};  // not null terminated
+    string s1(cp);
+    string s2(noNUll, 2);
+    string s3(noNUll);   //
+    string s4(cp + 6, 5);
+    string s5(s1, 6, 5);
+    string s6(s1, 6);
+    string s7(s1, 6, 20);
+
+    cout << s1 << endl;
+    cout << s2 << endl;
+    cout << s3 << endl;  // Hie
+    cout << s4 << endl;
+    cout << s5 << endl;
+    cout << s6 << endl;
+    cout << s7 << endl;
+    // string s8(s1, 16);  // std::out_of_range
+    // cout << s8 << endl;
+
+}
+
+void test_string_substr() {
+    string s1 = "hello world";
+    string s2 = s1.substr(0, 5);  // [0, 5)
+    cout << s2 << endl;
+    string s3 = s1.substr(6);  // [6, n)
+    cout << s3 << endl;
+    string s4 = s1.substr(6, 11);
+    cout << s4 << endl;
+}
+
+void q_9_41() {
+    vector<char> vc = {'a', 'b', 'c', 'd'};
+    string s(vc.cbegin(), vc.cend());
+    cout << s << endl;
+    int i = 44-27 + 91-76 + 19-2+57-42+20-5+58-43+29-14+68-51+35-20+70-55+42-25+77-62+29-9+82-65+10-0+639-630;
+    cout << i << endl;
+}
+
+void q_9_42 () {
+    string s1;
+    s1.reserve(100);   // 读至少100个字符
+    char c;
+    while (cin >> c) {
+        s1.push_back(c);
+    }
+    cout << s1 << endl;
+}
+
+void test_string_insert_erase_assign() {
+    // 除了 iterator 还可接收position参数
+    string s = "hello";
+    s.insert(s.size(), 5, '!');   // 末尾插入5个！
+    s.erase(s.size() - 5, 5);   // 删除结尾5个
+
+    const char *cp = "let's go!";
+    size_t length = std::strlen(cp);
+
+    cout << length << endl;
+    size_t n = 5;
+    if (n <= length) {
+        s.assign(cp, n);
+    } else {
+        std::cout << "Error: n is greater than the length of the string." << std::endl;
+    }
+    // s.assign(cp, 5);   // s = cp 前5个  n超出cp长度会引发undefined
+    cout << s << endl;
+
+    s.insert(s.size(), cp + 5);
+    cout << s << endl;
+
+    string s1 = "some string", s2 = "some other string";
+    s1.insert(0, s2); // insert a copy of s2 before position 0 in s
+    cout << s1 << endl;
+    // insert s2.size() characters from s2 starting at s2[0] before s[0]
+    s1.insert(0, s2, 0, s2.size());
+    cout << s1 << endl;
+}
+
+void test_string_append_replace() {
+    string s("C++ Primer"), s2 = s; // initialize s and s2 to "C++ Primer"
+    s.insert(s.size(), " 4th Ed.");
+    s2.append(" 4th Ed.");
+
+    s.erase(11, 3);
+    s.insert(11, "5th");
+    cout << s << endl;
+
+    s2.replace(11, 3, "5th");
+    cout << s2 << endl;
+
+    // s.replace(11, 3, "Fifth"); // 删除3个，插入5个
+}
+
+void replace_iterator(string &s, const string &old_val, const string &new_val) {
+    for (auto iter = s.begin(); iter != s.end() - old_val.size(); ) {
+        if (old_val == string{iter, iter + old_val.size()}) {
+            iter = s.erase(iter, iter + old_val.size());
+            iter = s.insert(iter, new_val.begin(), new_val.end());
+            iter += new_val.size();
+        } else {
+            ++iter;
+        }
+    }
+}
+
+
+void replace_index(string &s, const string &old_val, const string &new_val) {
+    for (decltype(s.size()) i = 0; i < s.size() - old_val.size(); ) {
+        if (s[i] == old_val[0] && old_val == s.substr(i, old_val.size())) {
+            s.replace(i, old_val.size(), new_val);
+            i += new_val.size();
+        } else {
+            ++i;
+        }
+    }
+}
+
+
+
+
 int main(int argc, char **argv) {
+    string s{ "To drive straight thru is a foolish, tho courageous act." };
+    // replace_iterator(s, "tho", "though");
+    // replace_iterator(s, "thru", "through");
+    // cout << s << endl;
+    replace_index(s, "tho", "though");
+    replace_index(s, "thru", "through");
+    cout << s << endl;
+    test_string_append_replace();
+    test_string_insert_erase_assign();
+    // q_9_42();
+    q_9_41();
+    test_string_substr();
+    test_string_constructor();
+    // q_9_38();
     test_capacity_size();
     q_9_33();
     q_9_31_forward_list();
