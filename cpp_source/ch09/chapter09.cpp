@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <array>
 #include <deque>
 #include <filesystem>
@@ -7,8 +8,15 @@
 #include <vector>
 #include <string>
 #include <cstring>
+#include <fstream>
+#include <stack>
+#include <queue>
+
 #include "../ch08/Sales_Data.h"
 
+using std::stack;
+using std::queue;
+using std::priority_queue;
 using std::vector;
 using std::array;
 using std::list;
@@ -675,10 +683,249 @@ void replace_index(string &s, const string &old_val, const string &new_val) {
     }
 }
 
+void q_9_45(string &name , const string &pre, const string &suf) {
+    name.insert(name.begin(), pre.cbegin(), pre.cend());
+    name.append(suf);
+}
 
+void q_9_46(string &name , const string &pre, const string &suf) {
+    name.insert(0, pre);
+    name.insert(name.size(), suf);
+}
+
+void test_find() {
+    string name("Ulysses");
+    auto pos1 = name.find("ss");
+    auto pos2 = name.find('a');  // npos -1 18446744073709551615
+    cout << pos1 << " " << pos2 << endl;
+
+    string numbers("0123456789"), name2("r2d2");
+    auto pos3 = name2.find_first_of(numbers); // 找到第一个在numbers中的 字符的位置
+    cout << pos3 << '\n';
+    string dept("234dp1");
+    cout << dept.find_first_not_of(numbers) << '\n';  // 第一个不是的 位置
+    string str = "a quick brown fox jumps over the lazy dog";
+
+    string::size_type pos = 0;
+    string str3 = "dfdf1d=23cxcd3-454csas5";
+    while ( (pos = str3.find_first_of(numbers, pos)) != string::npos) {
+        cout << "find number at : " << pos << " element is " << str3[pos] << "\n";
+        ++pos;
+    }
+
+    string river("Mississippi");
+    auto first_pos = river.find("is"); // returns 1
+    auto last_pos = river.rfind("is"); // returns 4
+    cout << first_pos << " " << last_pos << '\n';
+}
+
+
+void q_9_47() {
+    string name("ab2c3d7R4E6"), numbers("0123456789");
+
+    cout << "num pos: " << '\n';
+    for (int i = 0; (i = name.find_first_of(numbers, i)) != string::npos; ++i) {
+        cout << "find num at : " << i << " element is : " << name[i] << endl;
+    }
+
+    cout << "alphabetic pos: " << '\n';
+    for (int i = 0; (i = name.find_first_not_of(numbers, i)) != string::npos; ++i) {
+        cout << "find alphabet at : " << i << " element is : " << name[i] << endl;
+    }
+
+}
+
+void q_9_49(string filename) {
+    std::ifstream ifs(filename);
+    if (! ifs) {
+        cout << "file not exist!!!" << endl;
+        return ;
+    }
+    string longest;
+    auto get_longest = [&longest](const string &str) -> void {
+        if (string::npos == str.find_first_not_of("aceimnorsuvwxz")) {  // 只含这几个字符
+            longest = str.size() > longest.size() ? str : longest ;
+        }
+    };
+
+    for (string word; ifs >> word;get_longest(word));
+    cout << longest << "\n";
+}
+
+int q_9_50(const vector<string> &sv) {
+    int sum = 0;
+    for (auto &str : sv) {
+        sum += std::stoi(str);
+    }
+    return sum;
+}
+
+float q_9_50_2(const vector<string> &sv) {
+    float sum = 0;
+    for (auto &str : sv) {
+        sum += std::stof(str);
+    }
+    return sum;
+}
+
+
+void test_numeric_conversion() {
+    int i = 42;
+    string s = std::to_string(i);
+    double d = std::stod(s);
+    string s2 = "pi = 3.1415";
+    d = std::stod(s2.substr(s2.find_first_of("+-0123456789.")));
+    cout << d << endl;
+}
+
+class Date {
+private:
+    unsigned year;
+    unsigned month;
+    unsigned day;
+public:
+    Date() : year(2025), month(5), day(25) {};
+    explicit Date(const string &date) {
+        // January 1, 1900, 1/1/1900, Jan 1, 1900
+        // 1/1/1900
+        unsigned format = 0, tag = 0;
+        if (date.find('/') != string::npos) {
+            format = 0x01;
+        }
+        if ((date.find_first_of(",") >= 4) && (date.find_first_of(",") != string::npos)) {
+            // January 1, 1900   Jan 1, 1900
+            format = 0x10;
+        } else if (date.find_first_of(' ') >= 3 && date.find_first_of(' ') != string::npos) {
+            //  Jan 1 1900
+            format = 0x10;
+            tag = 1;
+        }
+
+        switch (format) {
+            case 0x01: {
+                auto first_slash = date.find_first_of('/');
+                auto last_slash = date.find_last_of('/');
+                day = std::stoi(date.substr(0, first_slash));
+                month = std::stoi(date.substr(first_slash+1, last_slash - first_slash));
+                year = std::stoi(date.substr(last_slash+1, 4));
+                break;
+            }
+            case 0x10: {
+                if( date.find("Jan") < date.size() )  month = 1;
+                if( date.find("Feb") < date.size() )  month = 2;
+                if( date.find("Mar") < date.size() )  month = 3;
+                if( date.find("Apr") < date.size() )  month = 4;
+                if( date.find("May") < date.size() )  month = 5;
+                if( date.find("Jun") < date.size() )  month = 6;
+                if( date.find("Jul") < date.size() )  month = 7;
+                if( date.find("Aug") < date.size() )  month = 8;
+                if( date.find("Sep") < date.size() )  month = 9;
+                if( date.find("Oct") < date.size() )  month =10;
+                if( date.find("Nov") < date.size() )  month =11;
+                if( date.find("Dec") < date.size() )  month =12;
+                char split_chr = ',';
+                if (tag == 1) {
+                    split_chr = ' ';
+                }
+                auto first_num = date.find_first_of("123456789");
+                // 第一个数字 和 split
+                day = std::stoi(date.substr(first_num, date.find_first_of(split_chr) - first_num));
+                year = std::stoi(date.substr(date.find_last_of(' ') + 1, 4));
+                break;
+            }
+
+        }
+
+
+    };
+    void print() {
+        cout << "day:" << day << " " << "month: " << month << " " << "year: " << year << '\n';
+    }
+};
+
+void test_adaptor() {
+    // stack , queue 根据deque实现
+    // priority_queue 根据vector实现
+    deque<int> deq{1, 2, 3};
+    std::stack<int> stk(deq);
+    // override the default container type by naming a sequential container as a second type argument :
+    // 这个stack底层使用vector实现
+    stack<string, vector<string>> str_stack;
+    vector<string> svec{"abc", "deff"};
+    stack<string, vector<string>> str_stack2(svec);
+}
+
+void test_stack_adaptor() {
+    stack<int> intStack;
+    for (size_t ix = 0; ix != 10; ++ix)
+        intStack.push(ix);
+    while (!intStack.empty()) {
+        int val = intStack.top();
+        cout << val << ' ';
+        intStack.pop();
+    }
+    cout << endl;
+}
+
+void q_9_52(const string &s) {
+    // string s = "hello, (come and have fun (go) !!)!";
+    stack<char> stk;
+    string temp = "";
+    for (const auto &c : s) {
+        if (c == ')') {
+            // 出栈
+            while (!stk.empty() && stk.top() != '(') {
+                temp += stk.top();
+                stk.pop();
+            }
+            stk.pop(); // pop (
+
+            for (auto rit = temp.rbegin(); rit != temp.rend(); ++rit) {
+                stk.push(*rit);
+            }
+            temp = "";
+
+        } else {
+            stk.push(c);
+        }
+    }
+    string res = "";
+    while (! stk.empty()) {
+        res += stk.top();
+        stk.pop();
+    }
+    std::reverse(res.begin(), res.end());
+
+
+    cout << res << endl;
+}
 
 
 int main(int argc, char **argv) {
+    string s1 = "(he)l(lo), (come (and) have fun (go) !!)!";
+    q_9_52(s1);
+    test_stack_adaptor();
+    Date date1("1/1/2025");
+    date1.print();
+    Date date2("Jan 1 2024");
+    date2.print();
+    Date date3("January 1, 2023");
+    date3.print();
+
+    vector<string> sv{"123", "-23", "0"};
+    vector<string> fv{"123.1", "-12.4"};
+    cout << q_9_50_2(fv) << endl;
+    cout << q_9_50(sv) << endl;
+    test_numeric_conversion();
+    string file_name = "/mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch09/data";
+    q_9_49(file_name);
+    q_9_47();
+    test_find();
+    string name = "Ulysses";
+    // q_9_45(name, "Mr. ",  " Jr.");
+    q_9_46(name, "Mr. ",  " Jr.");
+    cout << name << endl;
+
     string s{ "To drive straight thru is a foolish, tho courageous act." };
     // replace_iterator(s, "tho", "though");
     // replace_iterator(s, "thru", "through");
