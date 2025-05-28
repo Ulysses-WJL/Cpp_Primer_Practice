@@ -5,6 +5,7 @@
 #include <list>
 #include <numeric>
 #include <iterator>
+#include "../ch08/Sales_Data.h"
 
 using std::cout;
 using std::endl;
@@ -24,6 +25,13 @@ using std::replace;
 using std::replace_copy;
 using std::sort;
 using std::unique;
+using std::partition;
+using std::stable_partition;
+using std::find_if;
+using std::for_each;
+using std::stable_sort;
+using std::transform;
+using std::count_if;
 
 
 void test_find() {
@@ -118,8 +126,8 @@ void test_back_inserter() {
 void test_copy_replace() {
     int a1[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     // int a2[] = a1; // 无法这样初始化
-    // int a2[sizeof(a1) / sizeof(*a1)];
-    int a2[std::size(a1)];
+    int a2[sizeof(a1) / sizeof(*a1)];
+    // int a2[(a1)];
     auto ret = copy(std::begin(a1), std::end(a1), a2);
     // ret will point just past the last element copied into a2.
     cout << "ret pos: " << ret << endl;
@@ -169,7 +177,7 @@ void q_10_7() {
 template<typename Sequence>
 auto println(Sequence const &seq) -> std::ostream& {
     for (auto const &item: seq) {
-        cout << item + "_" << "\n";
+        cout << item  << " ";
     }
     return cout << endl;
 }
@@ -189,7 +197,189 @@ void test_sort_unique() {
     println(svec);
 }
 
+bool is_shorter(const string &s1, const string &s2) {
+    return s1.size() < s2.size();
+}
+
+void test_sort_with_predicate() {
+    vector<string> svec{"the", "quick", "red", "fox", "jumps", "over", "a", "lazy", "dog"};
+    sort(svec.begin(), svec.end());
+    // sort(svec.begin(), svec.end(), is_shorter);
+    println(svec);
+    // equal的元素间顺序与原始的保持一致
+    stable_sort(svec.begin(), svec.end(), is_shorter);
+    println(svec);
+}
+
+bool is_shorter_sales_data(const Sales_Data &s1, const Sales_Data &s2) {
+    return s1.isbn() < s2.isbn();
+}
+
+void q_10_12() {
+    vector<Sales_Data> svec;
+    svec.emplace_back("aaa", 123, 2.5);
+    svec.emplace_back("ddd", 10, 2.0);
+    svec.emplace_back("ccc", 24, 5.5);
+    sort(svec.begin(), svec.end(), is_shorter_sales_data);
+    for (auto &item: svec) {
+        print(cout, item) << "\n";
+    }
+}
+
+bool is_more_than_five(const string &str) {
+    return str.size() >= 5;
+}
+
+void q_10_13_partition() {
+    vector<string> svec{"abc", "def", "hello", "partition", "hi"};
+    auto last = partition(svec.begin(), svec.end(), is_more_than_five);
+    // svec.erase(last, svec.end());
+    // println(svec);
+    for (auto it=svec.begin(); it != last; ++it) {
+        cout << *it << " ";
+    }
+    cout << "\n";
+}
+
+void q_10_14_test_lambda() {
+    // capture list 使用local statics 和函数外部生命
+    // [capture list](parameter list) -> return type { function body }
+    auto f = [] (const int a, const int b) {return a + b;};
+    cout << f(3, 4) << endl;
+}
+
+void elim_dups(vector<string> &words) {
+    sort(words.begin(), words.end());
+    auto last_unique = unique(words.begin(), words.end());
+    words.erase(last_unique, words.end());
+}
+
+void biggies(vector<string> &words, vector<string>::size_type sz) {
+    elim_dups(words);
+    // 按 长度排序
+    stable_sort(words.begin(), words.end(),
+        [](const string &s1, const string &s2){return s1.size() < s2.size();});
+    // 找到第一个 长度大于sz的位置，后面的都大于sz
+    auto wc = find_if(words.begin(), words.end(),
+        [sz](const string &a){return a.size() >= sz;});
+    // print
+    for_each(wc, words.end(), [](const string &s){cout << s << " ";});
+    cout << endl;
+}
+
+void q_10_15() {
+    int sz = 100;
+    auto f = [sz](const int a){return a + sz;};
+    cout << f(23) << endl;
+}
+
+
+void q_10_17() {
+    vector<Sales_Data> svec;
+    svec.emplace_back("aaa");
+    svec.emplace_back("ddd");
+    svec.emplace_back("ccc");
+    svec.emplace_back("abc");
+    svec.emplace_back("cae");
+    sort(svec.begin(), svec.end(),
+        [](const Sales_Data &item1, const Sales_Data &item2){return item1.isbn() < item2.isbn();});
+    for_each(svec.begin(), svec.end(), [](const Sales_Data &item){print(cout, item) << " ";});
+    cout << endl;
+}
+
+void q_10_18(vector<string> &words, vector<string>::size_type sz) {
+    elim_dups(words);
+    auto pivot = partition(words.begin(), words.end(), [sz](const string &a){return a.size() >= sz;});
+    // print
+    for_each(words.begin(), pivot, [](const string &s){cout << s << " ";});
+    cout << endl;
+}
+
+void q_10_19(vector<string> &words, vector<string>::size_type sz) {
+    elim_dups(words);
+    auto pivot = stable_partition(words.begin(), words.end(), [sz](const string &a){return a.size() >= sz;});
+    // print
+    for_each(words.begin(), pivot, [](const string &s){cout << s << " ";});
+    cout << endl;
+}
+
+void test_lambda_capture() {
+    size_t v1 = 42;
+    auto f = [v1](){return v1;};  // 定义时就copy了 v1
+    auto f2 = [&v1] {return v1;};  // 引用
+    v1 = 0;
+    cout << f() << endl;  // 42
+    cout << f2() << endl;  // 0
+}
+
+void test_mix_captures(vector<string> &words, vector<string>::size_type sz, std::ostream &os=cout, char c=' ') {
+    elim_dups(words);
+    auto pivot = stable_partition(words.begin(), words.end(), [sz](const string &a){return a.size() >= sz;});
+    // print
+    // 隐式捕获在前，显式在后；混合时 比需一者为值捕获， 另一种引用捕获
+    for_each(words.begin(), pivot, [&, c](const string &s){os << s << c;});
+    cout << endl;
+    for_each(words.begin(), pivot, [=, &os](const string &s){os << s << c;});
+}
+
+void test_multable_lambda() {
+    size_t v1 = 0;
+    auto f = [v1](){return v1;};  // 定义时就copy了 v1
+    // auto f2 = [v1]() mutable  {return ++v1;};  // 可以改变v1, 参数列表不能省略
+    auto f2 = [v1]() mutable   {return ++v1;};  // 引用nonconst variable  可以改变v1
+    v1 = 100;
+    cout << f() << endl;  // 0
+    cout << f2() << endl;  // 1
+}
+
+void test_multable_lambda_2() {
+    size_t v1 = 0;
+    auto f = [v1](){return v1;};  // 定义时就copy了 v1
+    // auto f2 = [v1]() mutable  {return ++v1;};  // 可以改变v1, 参数列表不能省略
+    auto f2 = [&v1]()  {return ++v1;};  // 引用nonconst variable  可以改变v1
+    v1 = 100;
+    cout << f() << endl;  // 0
+    cout << f2() << endl;  // 101
+}
+
+void test_lambda_return_type() {
+    vector<int> ivec{-1, 2, -3, 133, -2442};
+    // transform(ivec.begin(), ivec.end(), ivec.begin(),
+    //     [](int i){return i < 0 ? -i:i;});
+    // tailing return type
+    transform(ivec.begin(), ivec.end(), ivec.begin(),
+        [](int i) -> int {if (i < 0) return -i; else return i;});
+    println(ivec);
+}
+
+void q_10_20_count_if(vector<string> &svec, vector<string>::size_type sz) {
+    auto i = count_if(svec.begin(), svec.end(),
+        [sz](const string &s){return s.size() >= sz;});
+    cout << i  << endl;
+}
+
+void q_10_21() {
+    int local_int = 10;
+    auto f = [&local_int](){return --local_int;};
+}
+
 int main(int *argc, char **argv) {
+    vector<string> svec{"the", "quick", "red", "fox", "jumps",
+        "over", "the", "slow", "red", "turtle", "fox", "interesting", "international"};
+    q_10_20_count_if(svec, 6);
+    test_lambda_return_type();
+    test_multable_lambda();
+    test_multable_lambda_2();
+    test_lambda_capture();
+    q_10_17();
+    q_10_15();
+    q_10_14_test_lambda();
+    q_10_19(svec, 4);
+    q_10_18(svec, 4);
+    biggies(svec, 5);
+    q_10_13_partition();
+    q_10_12();
+    test_sort_with_predicate();
     test_sort_unique();
     // q_10_7();
     test_copy_replace();
