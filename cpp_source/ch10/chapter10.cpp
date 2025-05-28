@@ -5,6 +5,7 @@
 #include <list>
 #include <numeric>
 #include <iterator>
+#include <functional>
 #include "../ch08/Sales_Data.h"
 
 using std::cout;
@@ -32,6 +33,8 @@ using std::for_each;
 using std::stable_sort;
 using std::transform;
 using std::count_if;
+using std::bind;  // functional
+using namespace std::placeholders;  // 使用占位符
 
 
 void test_find() {
@@ -174,7 +177,7 @@ void q_10_7() {
     cout << endl;
 }
 
-template<typename Sequence>
+template <typename Sequence>
 auto println(Sequence const &seq) -> std::ostream& {
     for (auto const &item: seq) {
         cout << item  << " ";
@@ -260,6 +263,7 @@ void biggies(vector<string> &words, vector<string>::size_type sz) {
     stable_sort(words.begin(), words.end(),
         [](const string &s1, const string &s2){return s1.size() < s2.size();});
     // 找到第一个 长度大于sz的位置，后面的都大于sz
+    // find_if 需要一个unary的 predicate 这里用普通函数需要2个参数完成
     auto wc = find_if(words.begin(), words.end(),
         [sz](const string &a){return a.size() >= sz;});
     // print
@@ -360,12 +364,89 @@ void q_10_20_count_if(vector<string> &svec, vector<string>::size_type sz) {
 
 void q_10_21() {
     int local_int = 10;
-    auto f = [&local_int](){return --local_int;};
+    // 非0 local_int递减，!() 返回false
+    auto f = [&local_int]() -> bool { return (local_int == 0 ? true: !(local_int--));};
+    while (!f()) cout << local_int <<endl;
+}
+
+bool check_size(const string &s, string::size_type sz) {
+    return s.size() == sz;
+}
+
+std::ostream &printc(std::ostream &os, const string &s, char c) {
+    return os << s << c;
+}
+
+void test_bind() {
+    // 类似 partial， _1 占位符表示check_size的第一个参数
+    auto check6 = bind(check_size, _1, 6);
+    string s = "hello!";
+    cout << std::boolalpha << check6(s) << endl;
+
+    vector<string> svec{"a", "aaa", "cd", "1134", ""};
+    // 最长到最短
+    sort(svec.begin(), svec.end(), bind(is_shorter, _2, _1));
+    // sort(svec.begin(), svec.end(),
+    //     [](const string &str1, const string &str2){return str1.size() > str2.size();});
+    // println(svec);
+
+    // 在bind 中使用引用
+    for_each(svec.begin(), svec.end(),
+        bind(printc, ref(cout), _1, ';')
+    );
+}
+
+bool is_le(const string &str, string::size_type sz) {
+    return str.size() <= sz;
+}
+
+void q_10_22() {
+    vector<string> svec{"the", "quick", "red", "fox", "jumps",
+        "over", "the", "slow", "red", "turtle", "fox", "interesting", "international"};
+    string::size_type sz = 6;
+    auto cnt = count_if(svec.begin(), svec.end(), bind(is_le, _1, sz));
+    cout << cnt << endl;
+}
+
+auto checksize(const string &str, size_t sz) {
+    return str.size() < sz;
+}
+
+void q_10_24() {
+    // 给定一个string，使用 bind 和 check_size 在一个 int 的vector 中查找第一个大于string长度的值。
+    vector<int> ivec{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    string str("123234");
+    auto result = find_if(
+        ivec.begin(), ivec.end(), bind(check_size, str, _1));
+    if (result != ivec.end())
+        cout << *result << endl;
+    else
+        cout << "not found" << endl;
+}
+
+auto check_size_2(const string &str, size_t sz) {
+    return str.size() >= sz;
+}
+
+void q_10_25(vector<string> words, size_t sz) {
+    elim_dups(words);
+    // 按 长度排序
+    auto pviot = stable_partition(
+        words.begin(), words.end(), bind(check_size_2, _1, sz));
+    // print
+    for_each(words.begin(), pviot, [](const string &s){cout << s << " ";});
+    cout << endl;
 }
 
 int main(int *argc, char **argv) {
     vector<string> svec{"the", "quick", "red", "fox", "jumps",
         "over", "the", "slow", "red", "turtle", "fox", "interesting", "international"};
+    q_10_25(svec, 5);
+    q_10_24();
+    q_10_22();
+    test_bind();
+    q_10_21();
+
     q_10_20_count_if(svec, 6);
     test_lambda_return_type();
     test_multable_lambda();
