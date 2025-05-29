@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <algorithm>
@@ -7,6 +8,7 @@
 #include <iterator>
 #include <functional>
 #include "../ch08/Sales_Data.h"
+#include "../include/Sales_item.h"
 
 using std::cout;
 using std::endl;
@@ -35,6 +37,10 @@ using std::transform;
 using std::count_if;
 using std::bind;  // functional
 using namespace std::placeholders;  // 使用占位符
+using std::inserter;
+using std::back_inserter;
+using std::front_inserter;
+
 
 
 void test_find() {
@@ -158,6 +164,7 @@ void q_10_7() {
     while (cin >> i) {
         lst.push_back(i);
     }
+    // vec还是空的,使用push_back插入数值
     copy(lst.cbegin(), lst.cend(), back_inserter(vec));
     for (auto &item : vec) {
         cout << item << " ";
@@ -408,7 +415,7 @@ void q_10_22() {
     cout << cnt << endl;
 }
 
-auto checksize(const string &str, size_t sz) {
+auto checksize(const string &str, size_t sz) -> bool {
     return str.size() < sz;
 }
 
@@ -438,7 +445,142 @@ void q_10_25(vector<string> words, size_t sz) {
     cout << endl;
 }
 
+
+void test_inserter() {
+    vector<int> ivec{1, 2, 3, 4, 5};
+    vector<int> dest;
+    list<int> dest_front;
+    // inserter 任意位置插入
+
+    copy(ivec.begin(), ivec.end(), inserter(dest, dest.begin()));
+    // 等价于
+    // auto it = dest.begin();
+    // for (auto &item: ivec) {
+    //     it = dest.insert(it, item);
+    //     ++it;
+    // }
+    println(dest);
+    // 使用push_front 在开头插入， 5 4 3 2 1
+    copy(ivec.begin(), ivec.end(), front_inserter(dest_front));
+    println(dest_front);
+}
+
+void q_10_27_unique_copy() {
+    vector<string> svec{"test", "how", "test", "how", "low"};
+    list<string> unique_lst;
+    sort(svec.begin(), svec.end());
+    // 移除相邻重复项, 先排序
+    std::unique_copy(svec.begin(), svec.end(), back_inserter(unique_lst));
+    println(unique_lst);
+}
+
+void q_10_28() {
+    vector<int> ivec{1, 2, 3, 4, 5, 6, 7, 8, 9};
+    vector<int> vec, vec1, vec2;
+    list<int> lst3;
+    // 1->9
+    // copy(ivec.begin(), ivec.end(), vec.begin());
+    // println(vec);
+    // vec没有预先分配空间 直接复制到vec程序可能会崩溃或产生其他未定义行为
+    copy(ivec.begin(), ivec.end(), inserter(vec1, vec1.begin()));
+    println(vec1);
+    // 1 -> 9
+    copy(ivec.begin(), ivec.end(), back_inserter(vec2));
+    println(vec2);
+    // 9 -> 1
+    copy(ivec.begin(), ivec.end(), front_inserter(lst3));
+    println(lst3);
+}
+
+void test_istream_iterators() {
+    //Lazy Evaluation, 使用到迭代器时 才会读
+    // std::istream_iterator<int> int_it(cin);  // read ints from cin
+    // std::istream_iterator<int> int_eof;  // empty istream_iterator 代表eof
+    // vector<int> ivec;
+    // while (int_it != int_eof)
+    //     ivec.push_back(*int_it++);
+    std::istream_iterator<int> int_it(cin), int_eof;
+    // vector<int> ivec(int_it, int_eof);
+    // println(ivec);
+    cout << accumulate(int_it, int_eof, 0) << endl;
+}
+
+void test_ostream_iterators() {
+    vector<int> ivec{1, 2, 3, 4};
+    // 往cout写入 int型数据，followed by 空格
+    std::ostream_iterator<int> out_iter(cout, " ");
+    // for (auto e: ivec)
+    //     *out_iter++ = e;
+    copy(ivec.begin(), ivec.end(), out_iter);
+    cout << endl;
+}
+
+void q_10_29() {
+    std::ifstream in(R"(D:\cpp_primer\ch10\words)");
+    std::istream_iterator<string> it(in), eof;
+    vector<string> svec(it, eof);
+    println(svec);
+}
+
+void q_10_30() {
+    std::istream_iterator<int> iter_int(cin), eof;
+    vector<int> ivec(iter_int, eof);
+    sort(ivec.begin(), ivec.end());
+    std::ostream_iterator<int> out(cout, " ");
+    copy(ivec.begin(), ivec.end(), out);
+    cout << endl;
+}
+
+void q_10_31() {
+    std::istream_iterator<int> iter_int(cin), eof;
+    vector<int> ivec(iter_int, eof);
+    sort(ivec.begin(), ivec.end());
+    std::ostream_iterator<int> out(cout, " ");
+    unique_copy(ivec.begin(), ivec.end(), out);
+    cout << endl;
+}
+
+void q_10_32() {
+    std::ifstream in(R"(D:\cpp_primer\ch10\item)");
+    std::istream_iterator<Sales_item> in_inter(in), in_eof;
+    vector<Sales_item> vec(in_inter, in_eof);
+    cout << "origin data: \n";
+    for_each(vec.begin(), vec.end(), [](const Sales_item &item){cout << item << endl;});
+    sort(vec.begin(),vec.end(), [](const Sales_item &a, const Sales_item &b){return a.isbn() < b.isbn();});
+    cout << "result: \n";
+    for (auto beg = vec.begin(), end = beg; beg != vec.end(); beg = end) {
+        // 找到isbn相同的一块
+        // Find the first element in a sequence for which a predicate is true. 前面为false 后面为True
+        end = find_if(beg, vec.end(),
+            [beg](const Sales_item &item){return beg->isbn() != item.isbn();});  // 前面为相同，后面不同
+        // 累加相同的，创建一个空的Sales_item
+        cout << accumulate(beg, end, Sales_item(beg->isbn())) << endl;
+        // beg更新成当前end
+    }
+}
+
+int q_10_33(const string &in_file, const string &even_file, const string &odd_file) {
+    std::ifstream in(in_file);
+    std::ofstream ofs_even(even_file), ofs_odd(odd_file);
+
+    std::istream_iterator<int> in_iter(in), eof;
+    std::ostream_iterator<int> out_even(ofs_even, "\n"), out_odd(ofs_odd, " ");
+    // *out_iter++ = e;
+    for_each(in_iter, eof,
+        [&out_even, &out_odd](const int i){*(i & 0x01? out_odd: out_even)++ = i;}
+        );
+    return 0;
+}
+
 int main(int *argc, char **argv) {
+    q_10_33(R"(D:\cpp_primer\ch10\int)", R"(D:\cpp_primer\ch10\even)", R"(D:\cpp_primer\ch10\odd)");
+    q_10_32();
+    q_10_29();
+    test_ostream_iterators();
+    // test_istream_iterators();
+    q_10_28();
+    q_10_27_unique_copy();
+    test_inserter();
     vector<string> svec{"the", "quick", "red", "fox", "jumps",
         "over", "the", "slow", "red", "turtle", "fox", "interesting", "international"};
     q_10_25(svec, 5);
