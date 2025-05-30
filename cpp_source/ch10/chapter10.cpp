@@ -7,6 +7,7 @@
 #include <numeric>
 #include <iterator>
 #include <functional>
+
 #include "../ch08/Sales_Data.h"
 #include "../include/Sales_item.h"
 
@@ -572,7 +573,68 @@ int q_10_33(const string &in_file, const string &even_file, const string &odd_fi
     return 0;
 }
 
+void test_reverse_iterators() {
+    // reverse iterators 需要支持--操作
+    vector<int> vec{0 ,1, 2, 4, 6, 5, 7, 9, 8, 3};
+    for (auto r_iter=vec.rbegin(); r_iter != vec.rend(); ++r_iter)
+        cout << *r_iter << " ";
+    cout << endl;
+    // sort(vec.begin(), vec.end());
+
+    sort(vec.rbegin(), vec.rend());  // 反序排序
+    println(vec);
+    std::reverse(vec.begin(), vec.end());
+    cout << "reverse 反转" << endl;
+    println(vec);
+
+    string line = "FIRST,MIDDLE,LAST";
+    auto first_comma = find(line.cbegin(), line.cend(), ',');
+    cout << string(line.cbegin(), first_comma) << endl;  // FIRST
+    auto last_comma = find(line.crbegin(), line.crend(), ',');
+    cout << string(line.crbegin(), last_comma) << endl;   // 反向 TSAL
+    cout << string(last_comma.base(), line.cend()) << endl;  // LAST
+}
+
+void q_10_35() {
+    vector<int> ivec{1, 2, 3, 4, 5 ,6};
+    // 迭代器反序， 普通
+    for (auto it = std::prev(ivec.cend()); ; --it) {
+        cout << *it << ' ';
+        if (it == ivec.cbegin()) break;
+    }
+    cout << endl;
+}
+
+void q_10_36() {
+    // find last 0
+    list<int> lst{1, 2, 0, 4, 0, 111, 0, 355};
+    auto last_zero = find(lst.crbegin(), lst.crend(), 0);
+    if (last_zero != lst.crend())
+        cout << std::distance(last_zero, lst.crend()) << endl;
+}
+
+void q_10_37() {
+    vector<int> ivec{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    list<int> lst(ivec.crbegin()+3, ivec.crend() - 2);
+
+    list<int> l;
+    copy(ivec.crbegin() + 3, ivec.crbegin() + 8, back_inserter(l));
+    println(lst);
+}
+
+void q_10_38() {
+    // 输入迭代器 : ==,!=,++,*,->
+    // 输出迭代器 : ++,*
+    // 前向迭代器 : ==,!=,++,*,->
+    // 双向迭代器 : ==,!=,++,--,*,->
+    // 随机访问迭代器 : ==,!=,<,<=,>,>=,++,--,+,+=,-,-=,*,->,iter[n]==*(iter+n)
+}
+
 int main(int *argc, char **argv) {
+    q_10_37();
+    q_10_36();
+    q_10_35();
+    test_reverse_iterators();
     q_10_33(R"(D:\cpp_primer\ch10\int)", R"(D:\cpp_primer\ch10\even)", R"(D:\cpp_primer\ch10\odd)");
     q_10_32();
     q_10_29();
