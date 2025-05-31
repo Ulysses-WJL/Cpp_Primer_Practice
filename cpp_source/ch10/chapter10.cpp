@@ -9,7 +9,7 @@
 #include <functional>
 
 #include "../ch08/Sales_Data.h"
-#include "../include/Sales_item.h"
+#include "../ch01/Sales_item.h"
 
 using std::cout;
 using std::endl;
@@ -630,12 +630,22 @@ void q_10_38() {
     // 随机访问迭代器 : ==,!=,<,<=,>,>=,++,--,+,+=,-,-=,*,->,iter[n]==*(iter+n)
 }
 
+void q_10_42_elim_dups(list<string> &words) {
+    words.sort();
+    words.unique();
+    println(words);
+}
+
+
 int main(int *argc, char **argv) {
+    list<string> lst{"the", "quick", "red", "fox", "jumps",
+        "over", "the", "slow", "red", "turtle", "fox", "interesting", "international"};
+    q_10_42_elim_dups(lst);
     q_10_37();
     q_10_36();
     q_10_35();
     test_reverse_iterators();
-    q_10_33(R"(D:\cpp_primer\ch10\int)", R"(D:\cpp_primer\ch10\even)", R"(D:\cpp_primer\ch10\odd)");
+    // q_10_33(R"(D:\cpp_primer\ch10\int)", R"(D:\cpp_primer\ch10\even)", R"(D:\cpp_primer\ch10\odd)");
     q_10_32();
     q_10_29();
     test_ostream_iterators();
