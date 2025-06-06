@@ -7,6 +7,8 @@
 #include <vector>
 #include <list>
 #include <utility>
+#include <fstream>
+#include <sstream>
 
 #include "../ch08/Sales_Data.h"
 
@@ -413,7 +415,51 @@ void q_11_32() {
     }
 }
 
+map<string, string> build_map(std::ifstream &map_file) {
+    map<string, string> trans_map;
+    string key;
+    string value;
+    while (map_file >> key && std::getline(map_file, value)) {
+        if (value.size() > 1)
+            trans_map[key] = value.substr(1);  // 跳过leading space
+        else
+            throw std::runtime_error("no rule for " + key);
+    }
+    return trans_map;
+}
+
+const string &transform(const string &s, const map<string, string> &m) {
+    auto map_it = m.find(s);
+    if (map_it != m.cend())
+        return map_it->second;  // 返回value， 替代的值
+    else
+        return s;
+}
+
+
+void word_transform(std::ifstream &map_file, std::ifstream &input) {
+    auto trans_map = build_map(map_file);
+    string text;
+    while (std::getline(input, text)) {  // 读每一行
+        std::istringstream stream(text);   // 字符串流，
+        string word;
+        bool firstword = true;   // 每行 第一个字符
+        while (stream >> word) {  // 读取每个单词
+            if (firstword)
+                firstword = false;
+            else
+                cout << " ";  // 每个单词前面插入空格
+            cout << transform(word, trans_map);
+        }
+        cout << endl;   // 行结束
+    }
+}
+
+
 int main(int argc, char *argv[]) {
+    std::ifstream map_file(R"(D:\cpp_primer\ch11\rule)");6
+    std::ifstream test(R"(D:\cpp_primer\ch11\text)");
+    word_transform(map_file, test);
     q_11_32();
     q_11_31();
     q_11_29();
