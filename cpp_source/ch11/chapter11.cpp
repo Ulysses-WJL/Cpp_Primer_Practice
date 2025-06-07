@@ -9,6 +9,7 @@
 #include <utility>
 #include <fstream>
 #include <sstream>
+#include <unordered_set>
 
 #include "../ch08/Sales_Data.h"
 
@@ -415,51 +416,73 @@ void q_11_32() {
     }
 }
 
-map<string, string> build_map(std::ifstream &map_file) {
-    map<string, string> trans_map;
-    string key;
-    string value;
-    while (map_file >> key && std::getline(map_file, value)) {
-        if (value.size() > 1)
+std::unordered_map<string, string> build_map(std::ifstream &map_file) {
+    // map<string, string> trans_map;
+    std::unordered_map<string, string> trans_map;
+    for (string key, value; map_file >> key && std::getline(map_file, value); ) {
+        if (value.size() > 1)  // key空格v  value的长度要大于1
             trans_map[key] = value.substr(1);  // 跳过leading space
+        // 多个相同key， 使用下标运算符会保留最后一次添加的规则，而用insert则保留第一次添加的规则
+        //  trans_map.insert({key, value.substr(1)});
         else
             throw std::runtime_error("no rule for " + key);
     }
     return trans_map;
 }
 
-const string &transform(const string &s, const map<string, string> &m) {
-    auto map_it = m.find(s);
-    if (map_it != m.cend())
-        return map_it->second;  // 返回value， 替代的值
-    else
-        return s;
+const string &transform(const string &s, const std::unordered_map<string, string> &m) {
+    auto map_it = m.find(s);  // 使用 m[s] s若不在m中，会额外插入
+    return map_it == m.cend() ? s : map_it->second;
 }
 
 
 void word_transform(std::ifstream &map_file, std::ifstream &input) {
     auto trans_map = build_map(map_file);
-    string text;
-    while (std::getline(input, text)) {  // 读每一行
+    for (string text; std::getline(input, text);) {  // 读每一行
         std::istringstream stream(text);   // 字符串流，
-        string word;
-        bool firstword = true;   // 每行 第一个字符
-        while (stream >> word) {  // 读取每个单词
-            if (firstword)
-                firstword = false;
-            else
-                cout << " ";  // 每个单词前面插入空格
-            cout << transform(word, trans_map);
+        for (string word; stream >> word;) {
+            cout << transform(word, trans_map) << " ";
         }
         cout << endl;   // 行结束
     }
 }
 
+size_t hasher(const Sales_Data &sd) {
+    return std::hash<string>() (sd.isbn());
+}
+
+bool eqOP(const Sales_Data &lhs, const Sales_Data &rhs) {
+    return lhs.isbn() == rhs.isbn();
+}
+
+void test_unordered_containers() {
+    /* 使用hash function
+     * key没有顺序关系, 必须支持hash处理，int long float double pointer string
+     */
+    std::unordered_map<string, size_t> word_cnt;
+    for (string word; cin >> word; ) {
+        ++word_cnt[word];
+    }
+    for (auto &item : word_cnt) {
+        cout << item.first << " : " << item.second << endl;
+    }
+    cout << word_cnt.bucket_count() << endl;
+
+    using SD_multiset = std::unordered_set<Sales_Data, decltype(hasher) *, decltype(eqOP) *>;
+    SD_multiset bookStore(42, hasher, eqOP);
+}
+
+void q_11_37() {
+    // ordered vs unordered
+    // 无序容器拥有更好的性能，有序容器使得元素始终有序。
+}
+
 
 int main(int argc, char *argv[]) {
-    std::ifstream map_file(R"(D:\cpp_primer\ch11\rule)");6
-    std::ifstream test(R"(D:\cpp_primer\ch11\text)");
-    word_transform(map_file, test);
+    // test_unordered_containers();
+    std::ifstream map_file("/mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch11/rule");
+    std::ifstream text("/mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch11/text");
+    word_transform(map_file, text);
     q_11_32();
     q_11_31();
     q_11_29();
