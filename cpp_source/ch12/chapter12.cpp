@@ -140,7 +140,86 @@ void test_mix() {
 
 }
 
+void test_unique_ptr() {
+    // only one unique_ptr at a time can point to a given object
+    unique_ptr<double> p1;
+    unique_ptr<int> p2(new int(42)); // direct initialization
+    unique_ptr<string> ps1(new string("GoGoGo"));
+    // unique_ptr<string> ps2(ps1); // error: no copy for unique_ptr
+    unique_ptr<string> ps3;
+    // ps3 = ps1; // Rvalue reference to type unique_ptr<string> cannot bind to lvalue of type unique_ptr<string>
+
+    p2 = nullptr;  // 释放p1指向的object，
+    // ps1.release(): 放弃对ps1指向对象o的控制，返回一个指向o的指针，ps1为null
+    // 现在ps4获得o的控制
+    unique_ptr<string> ps4(ps1.release());
+    cout << "value of ps4：" << *ps4 << endl;
+    unique_ptr<string> ps5(new string("Hello!"));
+    // transfers ownership from ps5 to ps4
+    // 原先ps4指向的对象被销毁
+    ps4.reset(ps5.release());
+    // ps4.release(); // // WRONG: ps4 won’t free the memory and we’ve lost the pointer
+    auto p = ps4.release();  // 没有使用智能指针，手动释放
+    cout << "value of p：" << *p << endl;
+    delete p;
+}
+
+unique_ptr<int> clone_unique(int p) {
+    // return unique_ptr<int>(new int(p));
+    unique_ptr<int> ret(new int(p));
+    return ret;
+}
+
+void test_return_unique_ptr() {
+    unique_ptr<int> p1(new int(42));
+    unique_ptr<int> p2 = clone_unique(*p1);
+    cout << *p1 << endl;
+    cout << *p2 << endl;
+}
+
+
+void q_12_16() {
+    unique_ptr<int> p1(new int(111));
+    // unique_ptr<int> p2(p1);
+//     error: use of deleted function ‘std::unique_ptr<_Tp, _Dp>::unique_ptr(const std::unique_ptr<_Tp, _Dp>&) [with _Tp = int; _Dp = std::default_delete<int>]’
+//   183 |     unique_ptr<int> p2(p1);
+//     |                          ^
+// In file included from /usr/include/c++/11/memory:76,
+//                from /mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch12/chapter12.cpp:3:
+// /usr/include/c++/11/bits/unique_ptr.h:468:7: note: declared here
+// 468 |       unique_ptr(const unique_ptr&) = delete;
+    unique_ptr<int> p3;
+    // p3 = p1;
+//     error: use of deleted function ‘std::unique_ptr<_Tp, _Dp>& std::unique_ptr<_Tp, _Dp>::operator=(const std::unique_ptr<_Tp, _Dp>&) [with _Tp = int; _Dp = std::default_delete<int>]’
+//   185 |     p3 = p1;
+//     |          ^~
+// In file included from /usr/include/c++/11/memory:76,
+//                from /mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch12/chapter12.cpp:3:
+// /usr/include/c++/11/bits/unique_ptr.h:469:19: note: declared here
+// 469 |       unique_ptr& operator=(const unique_ptr&) = delete;
+//     |                   ^~~~~~~~
+    cout << *p1 << endl;
+}
+
+void q_12_17() {
+    int ix = 1024, *pi = &ix, *pi2 = new int(2048);
+    typedef unique_ptr<int> IntP;
+    // IntP p0(ix);  // illegal, 需要将其绑定到一个new 返回的指针上。
+    // IntP p1(pi);  // illegal, 需要将其绑定到一个new 返回的指针上。
+    IntP p2(pi2);  // legal, 但pi2就会是dangling pointer，需要delete
+    p2 = nullptr;
+    // IntP p3(&ix);  // 不合适 p3销毁时， ix也会被释放
+    IntP p4(new int(2048));  // legal
+    // Don’t use get() to initialize or reset another smart pointer.
+    // IntP p5(p2.get());  // p5 和 p2 指向同一个对象，当 p5 和 p2 被销毁时，会使得同一个指针被释放两次
+}
+
+
 int main(int argc, char *argv[]) {
+    q_12_17();
+    q_12_16();
+    test_return_unique_ptr();
+    test_unique_ptr();
     test_mix();
     // q_12_6();
     q_12_1();
