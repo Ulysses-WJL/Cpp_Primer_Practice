@@ -136,8 +136,91 @@ void test_mix() {
     // process(x);  // error: cannot convert int* to shared_ptr<int>
     process(shared_ptr<int>(x));  // legal, but the memory will be deleted!
     int j = *x;  // undefined: x is a dangling pointer!
-    cout << j << endl;
+    cout << "j的值 undefine ： " << j << endl;
+}
 
+void test_shared_ptr_operations() {
+    shared_ptr<int> p(new int(23));
+    // p = new int(1024); // error: cannot assign a pointer to a shared_ptr
+    p.reset(new int(1024)); // p points to a new object
+    cout << "value of p: " << *p << endl;
+    if (!p.unique())
+        // 有其他共享资源的指针， 重置p，不影响其他指针
+        p.reset(new int(*p));
+    *p += 23;
+    cout << "new value of p: " << *p << endl;
+}
+
+void q_12_10() {
+    // 正确
+    shared_ptr<int> p(new int(42));
+    process(shared_ptr<int>(p));  // 创建一个临时的智能指针, 引用同一个对象 reference count +1
+    cout << "end, P: " << *p << endl;
+    // 结束后释放
+}
+
+void q_12_11() {
+    // 正确
+    shared_ptr<int> p(new int(42));
+    process(shared_ptr<int>(p.get()));  // 创建新智能指针，count 为1, 这里结束后 临时智能指针会被销毁
+    // p 所指的内存空间也被释放 ，p dangling pointer
+    // Process finished with exit code -1073740940 (0xC0000374)
+    cout << "end, P: " << *p << endl;
+}
+
+void q_12_12() {
+    auto p = new int();
+    auto sp = make_shared<int>();
+
+    process(sp);  // legal，结束后引用计数 重新变为1
+    // process(new int()); // illegal, 不能从内置指针隐式转换为智能指针。
+    // process(p);  //  illegal, 不能从内置指针隐式转换为智能指针。
+    // process(shared_ptr<int>(p));  // legal , 但结束后p指向的对象会被释放, 后续继续使用会出错
+}
+
+void q_12_13() {
+    auto sp = make_shared<int>();
+    auto p = sp.get();
+    delete p;  // sp 指向的内存空间也被释放，继续使用sp会报错
+}
+
+struct connection {
+    string ip;
+    int port;
+    connection(string s, int p): ip(s), port(p) {};
+};
+
+struct destination {
+    string ip;
+    int port;
+    destination(string s, int p): ip(s), port(p) {};
+};
+
+connection connect(destination *p_dest) {
+    // 创建一个到dest的 connection
+    shared_ptr<connection> p_conn(new connection(p_dest->ip, p_dest->port));  // p_conn_out销毁时，p_conn指向的连接也被释放
+    cout << "creating connection to " << p_dest->ip << ":" << p_dest->port  << "; use_count: " << p_conn.use_count() << endl;
+    return *p_conn;  // 返回连接的对象
+}
+void disconnect(connection conn) {
+    // 关闭连接，...
+    std::cout << "connection close(" << conn.ip << ":" << conn.port << ")" << std::endl;
+}
+
+void end_connection(connection *p_conn) {
+    disconnect(*p_conn);
+}
+
+void q_12_14(destination &d /* other parameters */)
+{
+    // 创建连接
+    connection conn = connect(&d);
+    // 使用智能指针管理conn，p_conn_out指向conn，当reference count 为0时，销毁指针，
+    // 释放conn 调用end_connection
+    shared_ptr<connection> p_conn_out(&conn, end_connection);  // deleter function
+    // auto p_conn_out = make_shared<connection>(conn);
+    cout << "connecting now(" << p_conn_out.use_count() << ")" << std::endl;
+    // 使用 ...
 }
 
 void test_unique_ptr() {
@@ -220,6 +303,10 @@ int main(int argc, char *argv[]) {
     q_12_16();
     test_return_unique_ptr();
     test_unique_ptr();
+    // q_12_11();
+    destination dest("192.168.0.1", 88);
+    q_12_14(dest);
+    q_12_10();
     test_mix();
     // q_12_6();
     q_12_1();
