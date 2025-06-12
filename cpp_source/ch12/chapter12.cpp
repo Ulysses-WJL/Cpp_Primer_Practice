@@ -217,7 +217,8 @@ void q_12_14(destination &d /* other parameters */)
     connection conn = connect(&d);
     // 使用智能指针管理conn，p_conn_out指向conn，当reference count 为0时，销毁指针，
     // 释放conn 调用end_connection
-    shared_ptr<connection> p_conn_out(&conn, end_connection);  // deleter function
+    // shared_ptr<connection> p_conn_out(&conn, end_connection);  // deleter function
+    shared_ptr<connection> p_conn_out(&conn, [](connection *p){disconnect(*p);});  // 使用lambda函数
     // auto p_conn_out = make_shared<connection>(conn);
     cout << "connecting now(" << p_conn_out.use_count() << ")" << std::endl;
     // 使用 ...
@@ -297,8 +298,22 @@ void q_12_17() {
     // IntP p5(p2.get());  // p5 和 p2 指向同一个对象，当 p5 和 p2 被销毁时，会使得同一个指针被释放两次
 }
 
+void test_weak_ptr() {
+    auto p = make_shared<int>(42);
+    // weak_ptr需要指向被shared_ptr管理的对象
+    weak_ptr<int> wp(p);
+    // 不会增加引用计数，即使有弱指针指向该对象，该对象也会被删除
+    cout << "use count : " << p.use_count() << endl;
+    // lock 检测weak_ptr 指向的对象是否存在
+    if (shared_ptr<int> np = wp.lock()) {  // true if np is not null
+        cout << "inside use count : " << p.use_count() << endl;
+        cout << *np << endl;
+    }
+    cout << "use count : " << p.use_count() << endl;
+}
 
 int main(int argc, char *argv[]) {
+    test_weak_ptr();
     q_12_17();
     q_12_16();
     test_return_unique_ptr();
