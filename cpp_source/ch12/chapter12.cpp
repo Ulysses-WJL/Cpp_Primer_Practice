@@ -1,8 +1,10 @@
+#include <cstring>
 #include <iostream>
 #include <string>
 #include <memory>
 #include <vector>
 #include <new>
+#include <fstream>
 #include "StrBlob.h"
 
 using std::cout; using std::endl; using std::cin;
@@ -312,7 +314,121 @@ void test_weak_ptr() {
     cout << "use count : " << p.use_count() << endl;
 }
 
+void q_12_19() {
+    std::ifstream f("/mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch12/storyDataFile.txt");
+    StrBlob sb;
+    for (string s; std::getline(f, s);) {
+        sb.push_back(s);
+    }
+    // 使用 StrBlobPtr 进行输出sb的内容, 需重要定义 !=
+    for (StrBlobPtr sbp = sb.begin(); sbp != sb.end(); sbp.incr()) {
+        cout << sbp.deref() << endl;
+    }
+}
+
+void q_12_21() {
+    // 为了能让 StrBlobPtr 使用 const StrBlob，你觉得应该如何修改？
+    // 定义一个名为ConstStrBlobPtr 的类，使其能够指向 const StrBlob。
+    const StrBlob csb = {"str 1", "hello world","what doesn't kill you", "makes you stronger!"};
+    // 使用 StrBlobPtr 进行输出sb的内容, 需重要定义 !=
+    for (ConstStrBlobPtr csbp = csb.cbegin(); csbp != csb.cend(); csbp.incr()) {
+        cout << csbp.deref() << endl;
+    }
+}
+
+size_t get_size() {
+    return 2;  // 可以创建大小为0的dynamic array
+}
+
+void test_dynamic_arrays() {
+    // 更推荐使用library containers
+    // pia points to the first of these ints, 而不是指向array的指针，也不能使用begin end， range-for
+    size_t n = get_size();
+    int *pia = new int[n];
+    int *p1 = new int[42];  // uninitialized ints
+    using arrT = int [42];
+    int *p2 = new arrT();  // initialized to 0
+    string *psa = new string[10];  // 10 empty string
+    string *psa1 = new string[10]();  // 10 empty string
+    // 不能在括号里面进行element initializer，
+    // 不能像`auto p3 = new auto("string");` 使用auto分配dynamic array
+
+    // braced list initializer
+    int *pia2 = new int[10]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    string *psa2 = new string[10]{"a", "an", "the", string(4, 'x')};
+    for (int *q = pia; q != pia + n; ++q) {
+        *q = 12;
+    }
+    if (n > 0)
+        cout << "pia: " << *pia << endl;
+    else
+        cout << "cannot dereference pia" << endl;
+
+    // brackets are necessary because we allocated an array
+    delete [] pia;
+    delete [] p1;
+    delete [] p2;
+    delete [] psa;
+    delete [] psa1;
+    delete [] pia2;
+    delete [] psa2;
+}
+
+void test_smart_pointer_dynamic_arrays() {
+    // 使用unique_ptr 管理 dynamic arrays
+    unique_ptr<int []> up(new int[10]);
+    for (size_t i = 0; i != 10; ++i) {
+        // unqiue_ptr points to an array, 使用subscript操作
+        up[i] = i;
+    }
+    up.release();  // automatically uses delete[] to destroy its pointer
+
+    // shared_ptrs provide no direct support for managing a dynamic array. 需
+    // 要自定义 deleter
+    shared_ptr<int> sp(new int[10], [](int *p){delete [] p;});
+    for (size_t i = 0; i != 10; ++i) {
+        // 使用get获取built-in pointer(int *p), + i移动到指定位置, dereference 到对应对象
+        *(sp.get() + i) = i;
+    }
+    sp.reset();  // uses the lambda we supplied that uses delete[] to free the array
+}
+
+void q_12_23() {
+    string s1("hello"), s2(" world");
+    const char *c1 = "hello";
+    const char *c2 = " world";
+    unsigned len = strlen(c1) + strlen(c2) + 1;
+    // unique_ptr<char []> uq(new char[len]);
+    char *r = new char[len]();
+    strcat(r, c1);
+    strcat(r, c2);
+    cout << r << endl;
+
+    strcpy(r, (s1+s2).c_str());
+    cout << r << endl;
+
+    delete [] r;
+}
+
+void q_12_24() {
+    //从标准输入读取一个字符串，存入一个动态分配的字符数组中
+    cout << "输入长度";
+    int size(0);
+    cin >> size;
+    char *buffer = new char[size + 1]();
+    cin.ignore(); // 1. **清除输入缓冲区中的多余字**, 2 清除cin的换行符
+    cout << "input the string: ";
+    cin.getline(buffer, size + 1);
+    cout << "input: " << buffer << endl;
+    delete [] buffer;
+}
+
 int main(int argc, char *argv[]) {
+    q_12_24();
+    q_12_23();
+    test_dynamic_arrays();
+    q_12_21();
+    q_12_19();
     test_weak_ptr();
     q_12_17();
     q_12_16();
