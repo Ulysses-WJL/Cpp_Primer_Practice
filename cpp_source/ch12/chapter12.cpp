@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -5,7 +6,10 @@
 #include <vector>
 #include <new>
 #include <fstream>
+#include <sstream>
+
 #include "StrBlob.h"
+#include "TextQuery.h"
 
 using std::cout; using std::endl; using std::cin;
 using std::string;
@@ -14,6 +18,7 @@ using std::unique_ptr;
 using std::weak_ptr;
 using std::make_shared;
 using std::vector;
+using std::allocator;
 
 void test_smart_ptr() {
     // it automatically deletes the object to which it points
@@ -337,7 +342,7 @@ void q_12_21() {
 }
 
 size_t get_size() {
-    return 2;  // 可以创建大小为0的dynamic array
+    return 4;  // 可以创建大小为0的dynamic array
 }
 
 void test_dynamic_arrays() {
@@ -423,8 +428,118 @@ void q_12_24() {
     delete [] buffer;
 }
 
+void test_coupling_allocation_construction() {
+    size_t n = 3;
+    string *const p = new string[n];
+    string *q = p;
+    for (string s; cin >> s && q != p+n; q++) {
+        *q = s;
+    }
+    const size_t size = q - p;
+    delete [] p;
+}
+
+void test_allocator() {
+    // separate allocation from construction
+    size_t n = get_size();
+    allocator<string> alloc;
+    auto const p = alloc.allocate(n);  // allocate n unconstructed strings
+    auto q = p;
+    // 超出n，会报 sysmalloc 错误
+    alloc.construct(q++, string(5, 'x'));  // 构造 指针指向区域的对象
+    alloc.construct(q++, 10, 'c');
+    alloc.construct(q++);
+    cout << *p << endl;
+    cout << *q << endl;  // disaster: q points to unconstructed memory!
+
+    // destroy， 只能释放已constructed的元素
+    while (q != p) {
+        alloc.destroy(--q);
+    }
+    // reuse the memory
+    alloc.deallocate(p, n);
+}
+
+void test_allocator_algorithms() {
+    // 在未初始化的内存中构造数据
+    allocator<int> ialloc;
+    vector<int> ivec{1, 2, 3, 4};
+    auto p = ialloc.allocate(ivec.size() * 2);
+    // 前半部分 copy自ivec , q：one past the last constructed element
+    auto q = std::uninitialized_copy(ivec.begin(), ivec.end(), p);
+    // 后半部分 fill 100
+    std::uninitialized_fill_n(q, ivec.size(), 100);
+}
+
+void q_12_26() {
+    size_t n = 3;
+    allocator<string> salloc;
+    auto const p = salloc.allocate(n);
+    auto q = p;
+    for (string s; cin >> s && q != p + n; q++) {
+        salloc.construct(q, s);
+    }
+    while (q != p) {
+        cout << "val: " << *--q << endl;
+        salloc.destroy(q);
+    }
+    salloc.deallocate(p, n);
+}
+
+void run_querires(std::ifstream &ifs) {
+    TextQuery tq(ifs);
+    while (true) {
+        cout << "enter word to look for , or q to quit: \n";
+        string s;
+        if (!(cin >> s) || (s == "q")) break;
+
+        print(cout, tq.query(toLowerCase(s))) << endl;
+    }
+}
+
+void q_12_27() {
+    std::ifstream file("/mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch12/storyDataFile.txt");
+    run_querires(file);
+}
+
+void q_12_28() {
+    using lineno = vector<string>::size_type;
+    std::map<const string, std::set<lineno>> word_map;
+    std::set<lineno> line_nos;
+    vector<string> file_text;
+    std::ifstream file("/mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch12/storyDataFile.txt");
+    for (string line; std::getline(file, line);) {
+        file_text.push_back(line);
+        lineno n = file_text.size() - 1;
+        std::istringstream words(line);
+        for (string word, clean_word, lower_word; words >> word; clean_word.clear()) {
+            lower_word = toLowerCase(word);
+            std::remove_copy_if(lower_word.begin(), lower_word.end(), std::back_inserter(clean_word), ispunct);
+            word_map[clean_word].insert(n);
+        }
+    }
+    while (true) {
+        cout << "enter word to look for , or q to quit: \n";
+        string s;
+        if (!(cin >> s) || (s == "q")) break;
+
+        if (auto res = word_map.find(toLowerCase(s)); res != word_map.end()) {
+            std::cout << s << " occurs " << res->second.size() << (res->second.size() > 1 ? " times" : " time") << std::endl;
+            for (auto no: res->second) {
+                cout << "\t(line " << no + 1 << ") " << file_text[no] << endl;
+            }
+        } else {
+            cout << s << " occurs 0 time." << endl;
+        }
+    }
+}
+
 int main(int argc, char *argv[]) {
-    q_12_24();
+    q_12_28();
+    // q_12_27();
+    // q_12_26();
+    test_allocator();
+    // q_12_24();
     q_12_23();
     test_dynamic_arrays();
     q_12_21();

@@ -2,3 +2,9 @@ Hello world!
 This is a funny trip for learning c++.
 I am Javen Chen.
 Nice to see you.
+When we design a class, it can be helpful to write programs using the class before
+actually implementing the members. That way, we can see whether the class has
+the operations we need. For example, the following program uses our proposed
+TextQuery and QueryResult classes. This function takes an ifstream that
+points to the file we want to process, and interacts with a user, printing the results
+for the given words:
