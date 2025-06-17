@@ -450,7 +450,7 @@ void test_allocator() {
     alloc.construct(q++, 10, 'c');
     alloc.construct(q++);
     cout << *p << endl;
-    cout << *q << endl;  // disaster: q points to unconstructed memory!
+    // cout << *q << endl;  // disaster: q points to unconstructed memory!
 
     // destroy， 只能释放已constructed的元素
     while (q != p) {
@@ -498,7 +498,7 @@ void run_querires(std::ifstream &ifs) {
 }
 
 void q_12_27() {
-    std::ifstream file("/mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch12/storyDataFile.txt");
+    std::ifstream file(R"(D:\cpp_primer\ch12\StoryDataFile.txt)");
     run_querires(file);
 }
 
@@ -507,7 +507,7 @@ void q_12_28() {
     std::map<const string, std::set<lineno>> word_map;
     std::set<lineno> line_nos;
     vector<string> file_text;
-    std::ifstream file("/mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch12/storyDataFile.txt");
+    std::ifstream file(R"(D:\cpp_primer\ch12\StoryDataFile.txt)");
     for (string line; std::getline(file, line);) {
         file_text.push_back(line);
         lineno n = file_text.size() - 1;
@@ -534,8 +534,19 @@ void q_12_28() {
     }
 }
 
+void q_12_32() {
+    // 使用TextQuery QueryResult StrBlob代替 vector<string>,
+    q_12_27();
+}
+
+void q_12_33() {
+    q_12_27();
+}
+
 int main(int argc, char *argv[]) {
-    q_12_28();
+    q_12_33();
+    // q_12_32();
+    // q_12_28();
     // q_12_27();
     // q_12_26();
     test_allocator();
