@@ -2,7 +2,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include "ch12/StrBlob.h"
+#include "../ch12/StrBlob.h"
 
 using std::cout;
 using std::endl;
@@ -98,7 +98,7 @@ void q_13_2() {
 }
 
 void q_13_3() {
-    // What happenswhenwe copy a StrBlob? What about StrBlobPtrs?
+    // What happens when we copy a StrBlob? What about StrBlobPtrs?
     /*
      * StrBlob中的 share_ptr会加一，
      * StrBlobPtrs copy时share_ptr不会改变 （weak_ptr）
@@ -248,8 +248,37 @@ void q_13_12() {
     cout << "=================片段================" << endl;
 }
 
+struct X {
+    X() {std::cout << "X()" << std::endl;}
+    X(const X&) {std::cout << "X copy constructor" << std::endl;}
+    X& operator=(const X &x) {cout << "X copy assignment" << endl; return *this;}
+    ~X() {cout << "X destructor" << endl;}
+};
+
+void q_13_13(const X &x, X x1) {
+    cout << "拷贝构造2个" << endl;
+    X x2(x), x3(x1);
+    vector<X> vec;
+    vec.reserve(3);
+    cout << "加入到container，" << endl;
+    vec.push_back(x1);
+    vec.push_back(x2);
+    vec.push_back(x3);
+    cout << "=操作，调用copy assignment" << endl;
+    x3 = x1;
+    cout << "函数结束，调用destructor vec中3个+x1 x2 x3"<< endl;
+}
+
 
 int main(int argc, char *argv[]) {
+    cout << "=================" << endl;
+    cout << "使用new 创建" << endl;
+    X *px = new X;
+    cout << "参数传递，引用/值, 值传递调用一次copy constructor" << endl;
+    q_13_13(*px, *px);
+    cout << "结束q_13_13 delete px,释放所指向的对象" << endl;
+    delete px;
+    cout << "=================" << endl;
     q_13_12();
     test_destructor();
     q_13_7();
