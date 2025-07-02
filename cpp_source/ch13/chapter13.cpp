@@ -21,8 +21,12 @@ public:
     Sales_data() : Sales_data("", 0, 0.0f) {}
     Sales_data(const Sales_data&);    // 自定义复制构造函数
     Sales_data& operator=(const Sales_data &);
+    // no work to do other than destroying the members, which happens automatically
+    // members不是在析构函数里进行销毁的，在后面隐式销毁阶段中被销毁。
+    ~Sales_data() { cout << "调用析构函数" << endl;}
+    string isbn() {return bookNo;}
 private:
-    std::string bookNo;
+    std::string bookNo;  // 调用string destructor释放
     int units_sold = 0;
     double revenue = 0.0;
 };
@@ -127,6 +131,9 @@ Point foo_bar(Point xx)  // 非引用参数， 复制构造
 // dynamically allocate a new string
 // and copy the object to which ps points, rather than copying ps itself.
 // q_13_8 添加 assignment operator， copy ps所指的对象
+
+// 先确认自己的类是否需要定义自己的析构函数.
+// HasPtr的合成析构函数不会delete ps， 所以需要定义一个析构函数来释放构造函数分配的内存。
 class HasPtr {
 public:
     HasPtr(const std::string &s = std::string()): ps(new std::string(s)), i(0) {}
@@ -142,6 +149,8 @@ public:
         }
         return *this;
     };
+    // q13.11 Add a destructor
+    ~HasPtr() {delete ps;}
 private:
     std::string *ps;
     int i;
@@ -185,7 +194,7 @@ void q_13_7() {
  * 隐式的析构函数不会delete built-in pointer所指的对象
  * smart pointers是class type， 所以会销毁，对象会被释放
  */
-
+// 当对象的引用或指针超出作用域时，不会调用destructor
 void test_destructor() {
     for (int i = 0; i < 1; ++i){ // new scope
         // p and p2 point to dynamically allocated objects
@@ -199,7 +208,49 @@ void test_destructor() {
         // destroying p2 decrements its use count; if the count
 }
 
+void q_13_9() {
+    /*
+     * Q： What is a destructor?
+     * A：~+类名 构成的成员函数 没有返回值，也不接受参数
+     * Q: What does the synthesized destructor do?
+     * A: 合成析构函数可被用来阻止该类型的对象被销毁。
+     * Q: When is a destructor synthesized?
+     * A：当一个类没有定义自己的析构函数时，编译器会为它生成一个合成析构函数
+     */
+}
+
+void q_13_10() {
+    /*
+    *  Q: What happens when a StrBlob object is destroyed?
+    *  A: data 的 use_count会减少，如果没有share_ptr指向它，会被释放
+    *  Q: What about a StrBlobPtr?
+    *  A: StrBlobPtr被销毁时，不会影响引用计数，动态内存不会被释放
+     */
+}
+
+
+bool fcn(const Sales_data *trans, Sales_data accum)
+{
+    Sales_data item1(*trans), item2(accum);
+    return item1.isbn() != item2.isbn();
+}
+
+void q_13_12() {
+    //How many destructor calls occur in the following code fragment?
+    Sales_data s1("aaa", 12, 0.5);
+    Sales_data s2("bbb", 10, 24);
+    cout << "=================片段================" << endl;
+    // accum 参数值传递，拷贝构造，函数结束时销毁，析构调用一次
+    // item1是通过trans指针拷贝构造的，函数内部局部变量，在函数结束时销毁，析构一次。
+    // item2是通过accum拷贝构造的，同样在函数结束时销毁，析构一次。
+    // trans指向的对象生命周期由外部决定，在函数内部不会被销毁。
+    fcn(&s1, s2);
+    cout << "=================片段================" << endl;
+}
+
+
 int main(int argc, char *argv[]) {
+    q_13_12();
     test_destructor();
     q_13_7();
     return 0;
