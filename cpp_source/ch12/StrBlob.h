@@ -26,7 +26,7 @@ public:
     void pop_back();
     std::string &front() const;
     std::string &back() const;
-
+    long count() const {return data.use_count();}
 private:
     std::shared_ptr<std::vector<std::string>> data;
     void check(size_type i, const std::string &msg) const;
@@ -59,6 +59,7 @@ public:
     explicit ConstStrBlobPtr(const StrBlob &a, size_t sz=0): wptr(a.data), curr_idx(sz) {}  // wptr指向对应的shared_ptr
     std::string& deref() const;
     ConstStrBlobPtr& incr();
+    long count() const {return wptr.use_count();}
 private:
     // check returns a shared_ptr to the vector if the check succeeds
     // 函数不会修改类的任何非 `mutable` 成员变量； 支持常量对象调用
