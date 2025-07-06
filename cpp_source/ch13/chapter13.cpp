@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <random>
 #include "../ch12/StrBlob.h"
 
 using std::cout;
@@ -134,6 +135,7 @@ Point foo_bar(Point xx)  // 非引用参数， 复制构造
 
 // 先确认自己的类是否需要定义自己的析构函数.
 // HasPtr的合成析构函数不会delete ps， 所以需要定义一个析构函数来释放构造函数分配的内存。
+// 如果不自己定义，使用编译器合成的，拷贝构造和拷贝赋值时，ps指向的就会是同一个
 class HasPtr {
 public:
     HasPtr(const std::string &s = std::string()): ps(new std::string(s)), i(0) {}
@@ -269,8 +271,178 @@ void q_13_13(const X &x, X x1) {
     cout << "函数结束，调用destructor vec中3个+x1 x2 x3"<< endl;
 }
 
+class numbered {
+public:
+    numbered(int v = 0) : value(v) {
+        std::random_device rd;  // seed
+        std::mt19937 gen(rd());  // 梅森旋转算法
+        std::uniform_int_distribution<> dis(0, 999999);  // uniform
+        mysn = dis(gen);
+    }
+    numbered(const numbered &other): numbered(other.value){}
+    numbered& operator=(const numbered &other) {
+        // mysn 还是自己的
+        value = other.value;
+        return *this;
+    }
+    int mysn;
+    int value;
+};
+
+void f (const numbered &s) { cout << s.mysn << endl; }
+
+void q_13_14() {
+    // numbered 是一个类，默认构造函数生成mysn（每个对象的序列号） 使用了synthesized copy-control
+    // void f (numbered s) { cout << s.mysn << endl; }
+    numbered a, b = a, c = b;   // a, b, c 的mysn相同，不符合预期 655705
+    f(a);
+    f(b);
+    f(c);
+}
+
+void q_13_15() {
+    // 添加了 copy constructor 上述会如何
+    numbered a, b = a, c = b;  // 3者mysn不同
+    cout << a.mysn << endl;
+    cout << b.mysn << endl;
+    cout << c.mysn << endl;
+    // 但f输出结果与它们自己的mysn不同，值传递会使用copy-constructor生成新的对象
+    f(a);
+    f(b);
+    f(c);
+}
+
+void q_13_16() {
+    // 修改 f参数类型 为const numbered & 结果如何
+    // f输出的与它们的mysn相同
+    numbered a, b = a, c = b;
+    cout << a.mysn << endl;
+    cout << b.mysn << endl;
+    cout << c.mysn << endl;
+    f(a);
+    f(b);
+    f(c);
+}
+
+// complier 生成default的 synthesized copy-control
+class Sales_data_default {
+public:
+    Sales_data_default() = default;  //在类内使用的default 是 implicitly inline
+    Sales_data_default(const Sales_data_default&) = default;
+    Sales_data_default& operator=(const Sales_data_default &);
+    ~Sales_data_default() = default;
+    string isbn() {return bookNo;}
+private:
+    std::string bookNo;
+    int units_sold = 0;
+    double revenue = 0.0;
+};
+Sales_data_default &Sales_data_default::operator=(const Sales_data_default &) = default;
+
+
+// prevent copies, 使用deleted functions
+struct Nocopy {
+    Nocopy() = default;
+    Nocopy(const Nocopy&) = delete;  // 不定义，否则complier会自动合成
+    Nocopy& operator=(const Nocopy&) = delete;
+    ~Nocopy() = default;  // 析构函数不能为delete， 否则就无法destory或create
+};
+/*
+* if a class has a datamember that cannot be default
+constructed, copied, assigned, or destroyed, then the corresponding member will
+be a deleted function.
+如类成员是reference 类型或是const类型，就不能使用编译器合成的copy-assignment
+ */
+
+// 旧版本使用private 来阻止拷贝
+class PrivateCopy {
+
+    PrivateCopy(const PrivateCopy&);
+    PrivateCopy& operator=(const PrivateCopy&);
+public:
+    PrivateCopy() = default;
+    ~PrivateCopy();
+};
+
+
+// q_13_18
+// q_13_19: 每个Employee的id不同，需要copy-constructor和copy-assignment；使用delete 显式阻止
+class Employee {
+public:
+    Employee();
+    Employee(string n);
+    Employee(const Employee &) = delete;
+    Employee& operator=(const Employee &) = delete;
+    const int my_id() {return id_; }
+private:
+    string name;
+    int id_;
+    static int uid;
+};
+int Employee::uid = 0;
+Employee::Employee() {
+    id_ = uid++;
+}
+
+Employee::Employee(string n) : name(n){
+    id_ = uid++;
+}
+
+// Employee::Employee(const Employee &rhs) {
+//     name = rhs.name;
+//     id_ = uid++;
+// }
+//
+// Employee &Employee::operator=(const Employee &rhs) {
+//     name = rhs.name;
+//     id_ = uid++;
+//     return *this;
+// }
+
+void q_13_18() {
+    Employee e1, e2("Jack");
+    cout << e1.my_id() << endl;
+    cout << e2.my_id() << endl;
+}
+
+// void q_13_19() {
+//     Employee e1, e2("Jack"), e3(e2);
+//     e1 = e3;
+//     cout << e1.my_id() << endl;
+//     cout << e2.my_id() << endl;
+//     cout << e3.my_id() << endl;
+// }
+
+void q_13_20() {
+    /*
+    * Explainwhat happens when we copy, assign, or destroy objects of our
+TextQuery and QueryResult classes from § 12.3 (p. 484).
+     */
+    // 使用编译器合成的 copy-control, 成员会被复制
+}
+
+void q_13_21() {
+    // TextQuery and QueryResult 使用系统合成的copy-control就能满足需求
+}
+
+// 管理不在类中的资源 需要定义 copy-control members.
+// 如类中使用了 string *
+/*
+* 类的行为可以像一个值，也可以像一个指针。
+行为像值：对象有自己的状态，副本和原对象是完全独立的。
+行为像指针：共享状态，拷贝一个这种类的对象时，副本和原对象使用相同的底层数据。
+ */
+
 
 int main(int argc, char *argv[]) {
+    /*
+     * 1. 需要destructor的基本需要copy-constructor 和 copy-assignment
+     * 2. 需要copy constructor的基本需要copy-assignment， vice versa
+     */
+    q_13_18();
+    q_13_16();
+    // q_13_15();
+    // q_13_14();
     cout << "=================" << endl;
     cout << "使用new 创建" << endl;
     X *px = new X;
