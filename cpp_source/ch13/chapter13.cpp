@@ -138,8 +138,10 @@ Point foo_bar(Point xx)  // 非引用参数， 复制构造
 // 如果不自己定义，使用编译器合成的，拷贝构造和拷贝赋值时，ps指向的就会是同一个
 // valuelike behavior
 class HasPtr {
+    // reorder elements时 algorithm调用
+    friend void swap(HasPtr&, HasPtr&);
 public:
-    HasPtr(const std::string &s = std::string()): ps(new std::string(s)), i(0) {}
+    HasPtr(const std::string &s = std::string(), int v = 0): ps(new std::string(s)), i(v) {}
     // 动态分配一个新的string，并将对象拷贝到ps所指向的位置，而不是拷贝ps本身
     HasPtr(const HasPtr &other): ps(new string(*other.ps)), i(other.i) {};
     HasPtr& operator=(const HasPtr &rhs) {
@@ -155,8 +157,10 @@ public:
         }
         return *this;
     };
+    HasPtr& operator=(HasPtr);
     // q13.11 Add a destructor
     ~HasPtr() {delete ps;}
+    void show() const {cout << "i : " << i << endl; cout << "*ps: " << *ps << endl; }
 private:
     std::string *ps;
     int i;
@@ -464,11 +468,144 @@ void q_13_26() {
     cout << s3.size() << endl;
 }
 
+// pointerlike 的 类, 通常使用shared_ptr
+// 自定义reference count
+class HasPtr1 {
+public:
+    // 构造函数, i初始化为0，ps指针初始化指，use 存在dynamic memory
+    HasPtr1(const string &s = string()): ps(new string(s)), i(0), use(new std::size_t (1)) {}
+    // copy constructor, pointerlike 直接复制指针, use直接复制（使用同一块地址） 再计数+1
+    HasPtr1(const HasPtr1 &other): ps(other.ps), i(other.i), use(other.use) {++*use;}
+    // copy assignment, 右边的计数增加， 左边的计数减少， 处理self-assignment
+    HasPtr1& operator=(const HasPtr1 &rhs) {
+        ++*rhs.use;  // 先加右边，rhs和this相同时，如果先减左边就会出问题
+        if (--*use == 0) {
+            delete ps;
+            delete use;
+        }
+        // 复制
+        ps = rhs.ps;
+        i = rhs.i;
+        use = rhs.use;
+        return *this;
+    }
+    // destructor
+    ~HasPtr1() {
+        // 每次调用use 计数减1， 为0时，销毁ps
+        if (--*use == 0) {
+            delete ps;
+            delete use;
+        }
+    }
+private:
+    string *ps;
+    int i;
+    std::size_t *use;  // 自定义的counter
+};
+
+
+// q_13_28
+// pointerlike
+class TreeNode {
+public:
+    TreeNode(): value(0), count(new int(1)), left(nullptr), right(nullptr)  {}
+    TreeNode(const TreeNode &rhs);
+    TreeNode& operator=(const TreeNode &rhs);
+    ~TreeNode();
+private:
+    std::string value;
+    int *count;  // 节点使用计数
+    TreeNode *left;
+    TreeNode *right;
+};
+
+TreeNode::TreeNode(const TreeNode &rhs) : value(rhs.value), count(rhs.count), left(rhs.left), right(rhs.right) {
+    ++*count;
+}
+
+TreeNode& TreeNode::operator=(const TreeNode &rhs) {
+    ++*rhs.count;
+    if (--*count == 0) {
+        delete left;
+        delete right;
+        delete count;
+    }
+    value = rhs.value;
+    left = rhs.left;
+    right = rhs.right;
+    count = rhs.count;
+    return *this;
+}
+
+TreeNode::~TreeNode() {
+    if (--*count == 0) {
+        delete left;
+        delete right;
+        delete count;
+    }
+}
+
+// valuelike
+class BinStrTree{
+public:
+    // 构造函数，一个默认的root Node
+    BinStrTree(): root(new TreeNode()){};
+    BinStrTree(const BinStrTree &rhs) : root(new TreeNode(*rhs.root)){};
+    BinStrTree& operator=(const BinStrTree &rhs);
+    ~BinStrTree() {delete root;}
+private:
+    TreeNode *root;
+};
+
+BinStrTree &BinStrTree::operator=(const BinStrTree &rhs) {
+    // 先创建临时变量，再删除原来的root，再赋值
+    TreeNode *tmp = new TreeNode(*rhs.root);
+    delete root;
+    root = tmp;
+    return *this;
+}
+
+// swap
+inline
+void swap(HasPtr &lhs, HasPtr &rhs) {
+    // 交换 i和ps 而不是整个对象
+    using std::swap;
+    cout << "执行swap" << endl;
+    // 不要使用 std::swap(lhs.i, rhs.i)
+    swap(lhs.ps, rhs.ps);  // 会自己寻找是使用library版本的swap还是自定义的swap
+    swap(lhs.i, rhs.i);
+}
+
+// Using swap in Assignment Operators
+HasPtr& HasPtr::operator=(HasPtr rhs) {  // 值传递，会使用copy constructor创建local variable
+    swap(*this, rhs);  // 使用上述定义的swap，交换当前和rhs，i和ps都交换
+    return *this;   // rhs临时变量删除，其ps被删除
+}
+
+void q_13_29() {
+    /*
+    * Explain why the calls to swap inside swap(HasPtr&, HasPtr&) do
+not cause a recursion loop.
+     swap(HasPtr&, HasPtr&) 里面是三个不同的函数
+     参数类型 HasPtr&, string & 和 int &
+     */
+}
+
+void q_13_30() {
+    HasPtr p1("这是p1"), p2("这是p2", 24);
+    p1.show();
+    p2.show();
+    swap(p1, p2);
+    p1.show();
+    p2.show();
+}
+
 int main(int argc, char *argv[]) {
     /*
      * 1. 需要destructor的基本需要copy-constructor 和 copy-assignment
      * 2. 需要copy constructor的基本需要copy-assignment， vice versa
      */
+    q_13_30();
     q_13_26();
     q_13_18();
     q_13_16();
