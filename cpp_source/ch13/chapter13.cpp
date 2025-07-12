@@ -136,6 +136,7 @@ Point foo_bar(Point xx)  // 非引用参数， 复制构造
 // 先确认自己的类是否需要定义自己的析构函数.
 // HasPtr的合成析构函数不会delete ps， 所以需要定义一个析构函数来释放构造函数分配的内存。
 // 如果不自己定义，使用编译器合成的，拷贝构造和拷贝赋值时，ps指向的就会是同一个
+// valuelike behavior
 class HasPtr {
 public:
     HasPtr(const std::string &s = std::string()): ps(new std::string(s)), i(0) {}
@@ -145,7 +146,10 @@ public:
         if (this != &rhs) {
             i = rhs.i;
             // 深拷贝
+            // 1. copy the right-hand operand into a local temporary
+            // 2. destroy the existing members of the left-hand operand
             string *temp_ps = new string(*rhs.ps);
+            // 如果rhs 和 this 是一个，直接delete 就会有undefined 错误
             delete ps;  // 删除当前ps原指向的字符串
             ps = temp_ps;
         }
@@ -433,12 +437,39 @@ void q_13_21() {
 行为像指针：共享状态，拷贝一个这种类的对象时，副本和原对象使用相同的底层数据。
  */
 
+void q_13_24() {
+    /*
+    *  Q: What would happen if the version of HasPtr in this section didn’t define a destructor?
+    *  A: 编译器会合成一个destructor，不会释放ps所指的对象的内存，最后导致memory leaky
+       Q: What if HasPtr didn’t define the copy constructor?
+       A: 会使用编译器合成的copy constructor， pointerlike behavior， 2个实例的ps指向的是同一个对象
+     */
+}
+
+void q_13_25() {
+    /*
+     *  StrBlob 如果要改成valuelike behavior
+     *  需要定义自己的copy constructor 和 copy assignment， 动态分配每个实例自己内存
+     *  不需要自己定义destructor， synthesized destructor 能够正确处理 smart pointer
+     */
+}
+
+void q_13_26() {
+    StrBlob s1{"a", "b", "cded"};
+    StrBlob s2(s1);
+    StrBlob s3;
+    s3 = s1;
+    cout << s1.size() << endl;
+    cout << s2.size() << endl;
+    cout << s3.size() << endl;
+}
 
 int main(int argc, char *argv[]) {
     /*
      * 1. 需要destructor的基本需要copy-constructor 和 copy-assignment
      * 2. 需要copy constructor的基本需要copy-assignment， vice versa
      */
+    q_13_26();
     q_13_18();
     q_13_16();
     // q_13_15();
