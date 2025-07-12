@@ -27,6 +27,9 @@ public:
     std::string &front() const;
     std::string &back() const;
     long count() const {return data.use_count();}
+
+    StrBlob(const StrBlob &);
+    StrBlob& operator=(const StrBlob &rhs);
 private:
     std::shared_ptr<std::vector<std::string>> data;
     void check(size_type i, const std::string &msg) const;
