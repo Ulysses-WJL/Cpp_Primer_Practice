@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -140,24 +141,26 @@ Point foo_bar(Point xx)  // 非引用参数， 复制构造
 class HasPtr {
     // reorder elements时 algorithm调用
     friend void swap(HasPtr&, HasPtr&);
+    friend bool operator<(const HasPtr &, const HasPtr &);
 public:
     HasPtr(const std::string &s = std::string(), int v = 0): ps(new std::string(s)), i(v) {}
     // 动态分配一个新的string，并将对象拷贝到ps所指向的位置，而不是拷贝ps本身
     HasPtr(const HasPtr &other): ps(new string(*other.ps)), i(other.i) {};
-    HasPtr& operator=(const HasPtr &rhs) {
-        if (this != &rhs) {
-            i = rhs.i;
-            // 深拷贝
-            // 1. copy the right-hand operand into a local temporary
-            // 2. destroy the existing members of the left-hand operand
-            string *temp_ps = new string(*rhs.ps);
-            // 如果rhs 和 this 是一个，直接delete 就会有undefined 错误
-            delete ps;  // 删除当前ps原指向的字符串
-            ps = temp_ps;
-        }
-        return *this;
-    };
+    // HasPtr& operator=(const HasPtr &rhs) {
+    //     if (this != &rhs) {
+    //         i = rhs.i;
+    //         // 深拷贝
+    //         // 1. copy the right-hand operand into a local variable
+    //         // 2. destroy the existing members of the left-hand operand
+    //         string *temp_ps = new string(*rhs.ps);
+    //         // 如果rhs 和 this 是一个，直接delete 就会有undefined 错误
+    //         delete ps;  // 删除当前ps原指向的字符串
+    //         ps = temp_ps;
+    //     }
+    //     return *this;
+    // };
     HasPtr& operator=(HasPtr);
+
     // q13.11 Add a destructor
     ~HasPtr() {delete ps;}
     void show() const {cout << "i : " << i << endl; cout << "*ps: " << *ps << endl; }
@@ -600,11 +603,49 @@ void q_13_30() {
     p2.show();
 }
 
+bool operator<(const HasPtr &lhs, const HasPtr &rhs) {
+    return *lhs.ps < *rhs.ps;
+}
+
+
+void q_13_31() {
+    /*
+    * Give your class a < operator and define a vector of HasPtrs. Give
+that vector some elements and then sort the vector. Notewhen swap is called.
+     */
+    vector<HasPtr> h_vec{{"a"}, {"z"}, {"c"}};
+    std::sort(h_vec.begin(), h_vec.end());  // 会调用swap，
+    /*
+    *
+    *在这个过程中会调用赋值运算符。由于你为 HasPtr 类定义了两个 operator=，导致编译器在以下情境中无法决定使用哪一个：
+    template<typename T>
+    void swap(T a, T b) {
+        T temp = std::move(a);
+        a = std::move(b);
+        b = std::move(temp);
+    }
+     */
+    for (auto &item : h_vec ) {
+        item.show();
+    }
+}
+
+void q_13_32() {
+    /*
+     * Would the pointerlike version of HasPtr benefit from defining a swap function?
+     * If so, what is the benefit? If not, why not?
+     * valuelike 版本的 HasPtr 定义swap 交换指针不用进行内存分配，因此得到了性能上的提升
+     * pointerlike 版本的 HasPtr1 本身不涉及内存分配， 不会得到性能提升。
+     */
+
+}
+
 int main(int argc, char *argv[]) {
     /*
      * 1. 需要destructor的基本需要copy-constructor 和 copy-assignment
      * 2. 需要copy constructor的基本需要copy-assignment， vice versa
      */
+    q_13_31();
     q_13_30();
     q_13_26();
     q_13_18();
