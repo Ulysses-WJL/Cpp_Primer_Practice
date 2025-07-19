@@ -640,6 +640,33 @@ void q_13_32() {
 
 }
 
+void q_13_33() {
+    /*
+    * Why is the parameter to the save and remove members of Message a Folder&?
+    * Why didn’t we define that parameter as Folder?
+    * Or const Folder&?
+    *
+    * save 和 remove 会修改Folder，所以不能为const Folder或Folder
+     */
+}
+
+void q_13_35 () {
+    /*
+    * What would happen if Message used the synthesized versions of the copy-control members?
+    * 如果使用编译器合成的copy control 只会对复制contents和folders的值
+    * 赋值后， 没有对所有folder都执行操作，Foler和Message 会不同步
+    */
+}
+
+void q_13_38() {
+    /*
+    * We did not use copy and swap to define the Message assignment
+operator. Why do you suppose this is so?
+    之前的case中需要动态分配内存，使用copy和swap实现赋值=，可以不需要这个步骤，
+    Message类中没有动态分配内存的操作，
+     */
+}
+
 int main(int argc, char *argv[]) {
     /*
      * 1. 需要destructor的基本需要copy-constructor 和 copy-assignment
