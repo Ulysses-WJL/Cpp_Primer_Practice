@@ -5,6 +5,8 @@
 #include <memory>
 #include <random>
 #include "../ch12/StrBlob.h"
+#include "StrVec.h"
+#include "String.h"
 
 using std::cout;
 using std::endl;
@@ -667,11 +669,102 @@ operator. Why do you suppose this is so?
      */
 }
 
+void q_13_39() {
+    StrVec str_vec;
+    str_vec.push_back("a");
+    str_vec.push_back("b");
+    str_vec.push_back("c");
+    StrVec str_vec2(str_vec);
+    for (auto &item : str_vec) {
+        cout << item << endl;
+    }
+    StrVec str_vec3;
+    str_vec3 = str_vec;
+    for (auto &item : str_vec3) {
+        cout << item << endl;
+    }
+    for (int i = 0; i != 100; ++i) {
+        str_vec.push_back("ii");
+    }
+    cout << str_vec.size() << endl;
+}
+
+void q_13_40() {
+    cout << "=========q_13_40===========" << endl;
+    StrVec str_vec{"a" , "b" , "c"};
+    for (auto &item : str_vec) {
+        cout << item << endl;
+    }
+    cout << "=========q_13_40===========" << endl;
+}
+
+void q_13_41() {
+    /*
+    * Why did we use postfix increment in the call to construct inside push_back?
+    * first_free指向的内存空间 进行构造，然后递增指针
+    * What would happen if it used the prefix increment?
+    * 如果使用prefix increment 则第一个 就会unconstructed
+     */
+}
+
+void foo(String x)
+{
+    std::cout << x.c_str() << std::endl;
+}
+
+void bar(const String& x)
+{
+    std::cout << x.c_str() << std::endl;
+}
+
+String baz()
+{
+    String ret("world");  // const char * constructor
+    return ret;
+}
+
+void q_13_44() {
+    cout << "=========q_13_44===========" << endl;
+    char text[] = "world";
+
+    String s0;
+    String s1("hello");
+    String s2(s0);
+    String s3 = s1;
+    String s4(text);
+    s2 = s1;
+
+    // foo(s1);
+    // bar(s1);
+    foo("temporary");  // const char * constructor
+    bar("temporary");  // use copy-assignment
+    String s5 = baz();
+
+    std::vector<String> svec;
+    svec.reserve(8);
+    svec.push_back(s0);  // copy constructor
+    svec.push_back(s1);
+    svec.push_back(s2);
+    svec.push_back(s3);
+    svec.push_back(s4);
+    svec.push_back(s5);
+    svec.push_back(baz()); // const char * constructor 然后 copy constructor
+    svec.push_back("good job");  // const char * constructor 然后 copy constructor
+
+    for (const auto &s : svec) {
+        std::cout << s.c_str() << std::endl;
+    }
+    cout << "=========q_13_44===========" << endl;
+}
+
 int main(int argc, char *argv[]) {
     /*
      * 1. 需要destructor的基本需要copy-constructor 和 copy-assignment
      * 2. 需要copy constructor的基本需要copy-assignment， vice versa
      */
+    q_13_44();
+    q_13_40();
+    q_13_39();
     q_13_31();
     q_13_30();
     q_13_26();

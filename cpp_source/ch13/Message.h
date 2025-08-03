@@ -1,7 +1,3 @@
-//
-// Created by bruce on 2025/7/19.
-//
-
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
