@@ -29,6 +29,7 @@ void StrVec::free() {
     // }
     // 13.43: for_each 版
     if (elements) {
+        // capture list 中添加 this， 允许lambda函数访问StrVec的member
         std::for_each(elements, first_free, [this](std::string &rhs){alloc.destroy(&rhs);});
         alloc.deallocate(elements, cap-elements);
     }
@@ -48,6 +49,12 @@ StrVec::StrVec(const StrVec &s) {
     first_free = cap = new_data.second;
 }
 
+// move constructor
+StrVec::StrVec(StrVec &&s) noexcept: elements(s.elements), first_free(s.first_free), cap(s.cap) {
+    // moved-from object will be destroyed
+    s.elements = s.first_free = s.cap = nullptr;
+}
+
 // destructor
 StrVec::~StrVec() {
     free();
@@ -61,6 +68,22 @@ StrVec &StrVec::operator=(const StrVec &rhs) {
     free();
     elements = new_data.first;
     first_free = cap = new_data.second;
+    return *this;
+}
+
+// move assignment
+StrVec & StrVec::operator=(StrVec &&rhs) noexcept {
+    if (this != &rhs) {
+        // free existing elements
+        free();
+        // take over resources from rhs
+        elements = rhs.elements;
+        first_free = rhs.first_free;
+        cap = rhs.cap;
+        // leave rhs in a destructible state
+        // rhs 的状态和default-initialized 相同
+        rhs.elements = rhs.first_free = rhs.cap = nullptr;
+    }
     return *this;
 }
 

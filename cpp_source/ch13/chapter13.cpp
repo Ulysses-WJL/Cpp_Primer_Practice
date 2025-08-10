@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <random>
+#include <utility>
 #include "../ch12/StrBlob.h"
 #include "StrVec.h"
 #include "String.h"
@@ -742,7 +743,7 @@ void q_13_44() {
 
     std::vector<String> svec;
     svec.reserve(8);
-    svec.push_back(s0);  // copy constructor
+    svec.push_back(s0);  // copy constructor * 6
     svec.push_back(s1);
     svec.push_back(s2);
     svec.push_back(s3);
@@ -757,11 +758,75 @@ void q_13_44() {
     cout << "=========q_13_44===========" << endl;
 }
 
+void test_rvalue_reference() {
+    // 右值引用，
+    /*
+     * 左值 (Lvalue)
+        定义: 左值是指可以出现在赋值语句左侧的表达式。它代表一个持久的对象或内存位置，可以被引用。
+        特征:
+        有持久的内存地址。
+        可以取地址（使用 & 运算符）。
+    * 右值 (Rvalue)
+        定义: 右值是指不能出现在赋值语句左侧的表达式。它通常是临时对象或字面量，表示一个值而不是一个位置。
+        特征:
+        没有持久的内存地址，通常在表达式求值后即失效。
+        通常是常量、临时对象或运算结果。
+    * 右值引用 (Rvalue Reference)
+        定义: 右值引用是 C++11 引入的一种新类型，用于引用右值。它用 && 表示。
+        特征:
+        允许开发者通过移动语义（move semantics）来优化资源管理，避免不必要的复制。
+        可以绑定到右值，但不能绑定到左值。
+        使用场景: 右值引用通常用于实现移动构造函数和移动赋值运算符，以有效地将资源从一个对象转移到另一个对象。
+        lvalue expression refers to an object’s identity whereas an
+        rvalue expression refers to an object’s value.
+     */
+    int i = 42;
+    int &r = i;
+    // int &&rr = i;  // cannot bind an rvalue reference to an lvalue
+
+    // int &r2 = i * 42;  //  i * 42 是rvalue 也不能使用普通的引用
+    const int &r3 = i * 42;  // ok: we can bind a reference to const to an rvalue
+    int &&rr2 = i * 42;  // 右值引用
+    // Variables Are Lvalues
+    int &&rr1 = 42; // 字面值是rvalue
+    // int &&rr3 = rr1; // the expression rr1 is an lvalue!
+
+    // lvalue 转为 rvalue reference， 之后rr1不在使用，除非rr1重新赋值或是销毁
+    int &&rr3 = std::move(rr1);
+    cout << rr3 << endl;
+    cout << rr1 << endl;
+    int tmp = rr1;
+}
+
+void q_13_45() {
+    // Distinguish between an rvalue reference and an lvalue reference.
+    /*
+    * 常规引用被称为左值引用
+      绑定到右值的引用被称为右值引用。
+     */
+}
+
+int f() {
+    return 42;
+}
+
+void q_13_46() {
+    vector<int> vi(100);
+    int &&r1 = f();
+    int &r2  = vi[0];
+    int &r3 = r1;
+    int &&r4 = vi[0] + f();
+    cout << "r4: " << r4 << endl;
+}
+
+
 int main(int argc, char *argv[]) {
     /*
      * 1. 需要destructor的基本需要copy-constructor 和 copy-assignment
      * 2. 需要copy constructor的基本需要copy-assignment， vice versa
      */
+    q_13_46();
+    test_rvalue_reference();
     q_13_44();
     q_13_40();
     q_13_39();
