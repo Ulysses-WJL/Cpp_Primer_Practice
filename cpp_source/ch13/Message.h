@@ -14,11 +14,16 @@ public:
     contents(str) { }
     // copy control to manage pointers to this Message
     Message(const Message&); // copy constructor
+    // move constructor
+    Message(Message&&);
     Message& operator=(const Message&); // copy assignment
+    Message& operator=(Message&&);
     ~Message(); // destructor
     // add/remove this Message from the specified Folder’s set of messages
     void save(Folder&);
     void remove(Folder&);
+    // move the Folder pointers fromm to this Message
+    void move_Folders(Message *m);
 private:
     std::string contents; // actual message text
     std::set<Folder*> folders; // Folders that have this Message

@@ -21,6 +21,7 @@ public:
     ~StrVec();
 
     void push_back(const std::string &);
+    void push_back(std::string &&);
     size_t size() const {return first_free - elements;}
     size_t capacity() const {return cap - elements;}
     std::string *begin() const {return elements;}

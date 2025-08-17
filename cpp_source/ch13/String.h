@@ -8,6 +8,8 @@ public:
     String() : String("") {};
     String(const char *);
     String(const String&);
+    String(String &&) noexcept;
+    String &operator=(String &&) noexcept;
     ~String();
     String& operator=(const String&);
 

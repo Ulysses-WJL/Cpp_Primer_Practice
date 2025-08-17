@@ -29,6 +29,25 @@ String::String(const String &rhs) {
     std::cout << "copy constructor" << std::endl;
 }
 
+// q_13_49
+// move construct
+// lhs的成员都用move 改为rhs的； rhs的成员再清除
+String::String(String &&rhs) noexcept : elements(rhs.elements), end(rhs.end) {
+    std::cout << "move constructor" << std::endl;
+    rhs.elements = rhs.end = nullptr;
+}
+
+String & String::operator=(String &&rhs) noexcept {
+    std::cout << "move assignment" << std::endl;
+    if (this != &rhs) {
+        free();
+        elements = rhs.elements;
+        end = rhs.end;
+        rhs.elements = rhs.end = nullptr;
+    }
+    return *this;
+}
+
 void String::free() {
     if (elements) {
         std::for_each(elements, end, [this](char &c){alloc.destroy(&c);});

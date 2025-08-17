@@ -147,22 +147,20 @@ class HasPtr {
     friend bool operator<(const HasPtr &, const HasPtr &);
 public:
     HasPtr(const std::string &s = std::string(), int v = 0): ps(new std::string(s)), i(v) {}
+    // 添加move constructor
+    // p的ps设置为0或nullptr  ensure that it is safe to destroy the moved-from object
+    // 1 避免双重释放
+    //  当使用移动构造函数时，目标对象（this）接管了原对象（p）的资源（即 p.ps 指向的内存）。如果不将 p.ps 设为 nullptr，
+    //  原对象在析构时会尝试释放同一块内存。这会导致双重释放（double free），从而引发未定义行为。
+    //  2. 明确表示转移  表明该对象不再拥有其指向的资源 防止后续对已移动对象的误用。
+    HasPtr(HasPtr &&p) noexcept : ps(p.ps), i(p.i) {p.ps = nullptr; cout << "move constructor" << endl; };
     // 动态分配一个新的string，并将对象拷贝到ps所指向的位置，而不是拷贝ps本身
-    HasPtr(const HasPtr &other): ps(new string(*other.ps)), i(other.i) {};
-    // HasPtr& operator=(const HasPtr &rhs) {
-    //     if (this != &rhs) {
-    //         i = rhs.i;
-    //         // 深拷贝
-    //         // 1. copy the right-hand operand into a local variable
-    //         // 2. destroy the existing members of the left-hand operand
-    //         string *temp_ps = new string(*rhs.ps);
-    //         // 如果rhs 和 this 是一个，直接delete 就会有undefined 错误
-    //         delete ps;  // 删除当前ps原指向的字符串
-    //         ps = temp_ps;
-    //     }
-    //     return *this;
-    // };
-    HasPtr& operator=(HasPtr);
+    HasPtr(const HasPtr &other): ps(new string(*other.ps)), i(other.i) {cout << "copy constructor" << endl;};
+    // HasPtr& operator=(const HasPtr &);
+    HasPtr &operator=(HasPtr &&) noexcept;
+    HasPtr &operator=(const HasPtr &);
+    // 同时支持 move、copy assignment 但效率更低
+    // HasPtr& operator=(HasPtr);
 
     // q13.11 Add a destructor
     ~HasPtr() {delete ps;}
@@ -171,6 +169,57 @@ private:
     std::string *ps;
     int i;
 };
+
+
+
+HasPtr &HasPtr::operator=(HasPtr &&rhs) noexcept {
+    if (this != &rhs) {
+        ps = rhs.ps;
+        i = rhs.i;
+        rhs.ps = nullptr;
+    }
+    cout << "move assignment operator" << endl;
+    return *this;
+}
+
+
+HasPtr &HasPtr::operator=(const HasPtr &rhs) {
+    if (this != &rhs) {
+        i = rhs.i;
+        // 深拷贝
+        // 1. copy the right-hand operand into a local variable
+        // 2. destroy the existing members of the left-hand operand
+        string *temp_ps = new string(*rhs.ps);
+        // 如果rhs 和 this 是一个，直接delete 就会有undefined 错误
+        delete ps;  // 删除当前ps原指向的字符串
+        ps = temp_ps;
+    }
+    cout << "copy assignment operator" << endl;
+    return *this;
+};
+
+// swap
+inline
+void swap(HasPtr &lhs, HasPtr &rhs) {
+    // 交换 i和ps 而不是整个对象
+    using std::swap;
+    cout << "执行swap" << endl;
+    // 不要使用 std::swap(lhs.i, rhs.i)
+    swap(lhs.ps, rhs.ps);  // 会自己寻找是使用library版本的swap还是自定义的swap
+    swap(lhs.i, rhs.i);
+}
+
+// Using swap in Assignment Operators
+// assignment operator is both the move- and copy-assignment operator
+// 参数是nonreference的 -> copy initialized
+// copy initialization uses either the copy constructor or the move constructor
+// HasPtr &HasPtr::operator=(HasPtr rhs) {
+//     // 值传递，会使用copy constructor创建local variable
+//     cout << "assignment" << endl;
+//     swap(*this, rhs);  // 使用上述定义的swap，交换当前和rhs，i和ps都交换
+//     return *this;   // rhs临时变量删除，其ps被删除
+// }
+
 
 void q_13_6() {
    /*
@@ -351,6 +400,8 @@ private:
     int units_sold = 0;
     double revenue = 0.0;
 };
+
+
 Sales_data_default &Sales_data_default::operator=(const Sales_data_default &) = default;
 
 
@@ -569,23 +620,6 @@ BinStrTree &BinStrTree::operator=(const BinStrTree &rhs) {
     delete root;
     root = tmp;
     return *this;
-}
-
-// swap
-inline
-void swap(HasPtr &lhs, HasPtr &rhs) {
-    // 交换 i和ps 而不是整个对象
-    using std::swap;
-    cout << "执行swap" << endl;
-    // 不要使用 std::swap(lhs.i, rhs.i)
-    swap(lhs.ps, rhs.ps);  // 会自己寻找是使用library版本的swap还是自定义的swap
-    swap(lhs.i, rhs.i);
-}
-
-// Using swap in Assignment Operators
-HasPtr& HasPtr::operator=(HasPtr rhs) {  // 值传递，会使用copy constructor创建local variable
-    swap(*this, rhs);  // 使用上述定义的swap，交换当前和rhs，i和ps都交换
-    return *this;   // rhs临时变量删除，其ps被删除
 }
 
 void q_13_29() {
@@ -819,12 +853,279 @@ void q_13_46() {
     cout << "r4: " << r4 << endl;
 }
 
+/*
+ * 没有自定义的copy-control member,
+ * 成员可以使用move constructor，
+ * 编译器合成 移动构造
+ */
+class X_move {
+
+public:
+    int i;  // built-in
+    string s;  // string 有定义move operation
+};
+
+class hasX {
+    X_move mem;  // X_move has synthesized move operations
+};
+
+void test_synthesized_move_constructor() {
+    X_move x1;
+    x1.i = 1;
+    x1.s = "hello";
+    auto x2 = std::move(x1);
+    hasX hx, hx2 = std::move(hx);
+    cout << "x: " << x2.i << " " << x2.s << endl;
+}
+
+/*
+ * synthesized move operation 被定义为deleted 的情形
+ * 1. 类成员有copy constructor 但没有move constructor/没有synthesized的move constructor (move-assignment)
+ * 2. 类成员的move constructor或move-assignment 被定义为deleted或不可访问
+ * 3. destructor is deleted or inaccessible （与 copy constructor类似）
+ * 4. 类有const or reference member时，move-assignment被定义为deleted (与 copy-assignment类似)
+ */
+
+StrVec getVector() {
+    // 返回rvalue
+    return StrVec{"a", "b", "c", "d", "e", "f"};
+}
+
+void test_rvalue_lvalue() {
+    StrVec v1, v2;
+    v1 = v2;  // copy assignment
+    v2 = getVector();  // move assignment
+}
+
+class Foo {
+public:
+    Foo() = default;
+    Foo(const Foo &rhs) : i(rhs.i) {cout << "use copy constructor" << endl;}; // copy constructor
+    // other members, but Foo does not define a move constructor
+
+private:
+    int i;
+};
+
+void test_move_with_no_move_constructor() {
+    Foo x;
+    Foo y(x); // copy constructor; x is an lvalue
+    Foo z(std::move(x)); // copy constructor, because there is no move constructor
+}
+
+void test_move_hasptr() {
+    cout << "=========test_move_hasptr===========" << endl;
+    HasPtr hp1("this is p1", 1), hp2("this is p2", 2);
+    // HasPtr的 = 操作 支持 move 和copy - assignment
+    hp1 = hp2;   // copy constructor 然后执行swap
+    hp1 = std::move(hp2);  // move constructor 然后执行swap
+    HasPtr hp3 = hp1;  // copy constructor
+    HasPtr hp4 = std::move(hp1);  // move constructor
+    cout << "=========test_move_hasptr===========" << endl;
+}
+
+
+void q_13_50() {
+    cout << "=========q_13_50===========" << endl;
+    char text[] = "world";
+
+    String s0;
+    String s1("hello");
+    String s2(s0);
+    String s3 = s1;
+    String s4(text);
+    s2 = s1;
+
+    // foo(s1);
+    // bar(s1);
+    foo("temporary");  // const char * constructor
+    bar("temporary");  // use copy-assignment
+    // String 添加move操作后，baz返回
+    String s5 = baz();
+
+    std::vector<String> svec;
+    svec.reserve(8);
+    svec.push_back(s0);  // copy constructor * 6
+    svec.push_back(s1);
+    svec.push_back(s2);
+    svec.push_back(s3);
+    svec.push_back(s4);
+    svec.push_back(s5);
+    svec.push_back(baz()); // const char * constructor 然后 move constructor
+    svec.push_back("good job");  // const char * constructor 然后 move constructor
+
+    for (const auto &s : svec) {
+        std::cout << s.c_str() << std::endl;
+    }
+    cout << "=========q_13_50===========" << endl;
+}
+
+void q_13_50_1() {
+    // Return Value Optimization, RVO
+    /*
+    * 在许多现代 C++ 编译器中，返回值优化（Return Value Optimization, RVO）会被自动应用。
+    * 编译器可以优化掉临时对象的创建，直接在调用者的上下文中构造 String 对象。
+    * 因此，String ret("world"); 可能直接在 s5 的内存位置构造，而不需要创建临时对象。
+     */
+    // 只有baz内的 const char * constructor
+    String s = baz();
+}
+
+void q_13_51() {
+    /*
+    虽然 unique_ptr 不能拷贝，但我们在12.1.5节中编写了一个 clone 函数，
+    它以值的方式返回一个 unique_ptr。解释为什么函数是合法的，以及为什么它能正确工作。
+    这里使用是 move 操作
+     *
+     */
+
+    // unique_ptr<int> clone(int p) {
+    //     // ok: explicitly create a unique_ptr<int> from int*
+    //     return unique_ptr<int>(new int(p));
+    // }
+}
+
+void q_13_52() {
+    /*
+    * Explain in detail what happens in the assignments of the HasPtr objects
+on page 541. In particular, describe step by step what happens to values of hp,
+hp2, and of the rhs parameter in the HasPtr assignment operator.
+
+详见 test_move_hasptr
+     */
+}
+
+void q_13_53() {
+    /*
+    * As a matter of low-level efficiency, the HasPtr assignment operator
+is not ideal. Explain why. Implement a copy-assignment and move-assignment operator
+for HasPtr and compare the operations executed in your new move-assignment
+operator versus the copy-and-swap version.
+     */
+
+    /*
+     * 使用 HasPtr& operator=(HasPtr); 同时支持 copy/move assignment， 效率比实现2个不同的=更低，
+     *  `hp = std::move(hp2)`， ps被copy了2次，一次移动构造，一次swap中
+     *  单独实现移动赋值，只需要一次
+     */
+}
+
+void q_13_54() {
+    /*
+    * Whatwould happen if we defined a HasPtr move-assignment operator
+but did not change the copy-and-swap operator? Write code to test your answer.
+     */
+    /*
+    *  error: ambiguous overload for ‘operator=’ (operand types are ‘HasPtr’ and ‘std::remove_reference<HasPtr&>::type’ {aka ‘HasPtr’})
+  920 |     hp1 = std::move(hp2);  // move constructor 然后执行swap
+
+  有2个匹配的候选函数，无法区分
+     */
+}
+
+// reference qualifier
+class Foo_1 {
+public:
+    Foo_1(const string &s = string(), int v = 0) : ps(new string(s)), i(v) {};
+    // reference qualifier: may assign only to modifiable lvalues
+    // reference qualifier can be either & or &&, indicating that this may point to
+    // an rvalue or lvalue, respectively.
+    Foo_1 &operator=(const Foo_1 &rhs) &;
+    ~Foo_1() {delete ps;}
+private:
+    string *ps;
+    int i;
+};
+
+Foo_1 & Foo_1::operator=(const Foo_1 &rhs) & {
+    if (this != &rhs) {
+        delete ps;
+        ps = new string(*(rhs.ps));
+        i = rhs.i;
+    }
+    return *this;
+}
+
+Foo_1 retVal() {
+    return Foo_1("aaa");
+}
+
+Foo_1 &retFoo() {
+    Foo_1 ret("aaa");
+    return ret;
+}
+
+void test_reference_qualifier() {
+    // 使用reference_qualifier 会报错
+    // Non-const lvalue reference to type Foo_1 cannot bind to rvalue of type Foo_1
+    // retVal() = Foo_1();
+    Foo_1 i , j;
+    // retFoo() = i;  // OK, 但是 返回局部变量的引用， 函数结束时会被销毁，返回的引用将指向一个无效的内存地址，导致未定义行为。
+    j = retVal();
+}
+
+
+class Foo_2 {
+public:
+    Foo_2 sorted() &&; // may run on modifiable rvalues
+    Foo_2 sorted() const &; // may run on any kind of Foo
+    Foo_2(const std::initializer_list<int> il): data(il) {};
+    void print() const {
+        for (const auto& value : data) {
+            std::cout << value << " ";
+        }
+        std::cout << std::endl;
+    }
+    ~Foo_2() {
+        data.clear();
+    }
+private:
+    vector<int> data;
+
+};
+
+Foo_2 Foo_2::sorted() && {
+    // this object is an rvalue, so we can sort in place
+    cout << "call in place sorted" <<endl;
+    std::sort(data.begin(), data.end());
+    return *this;
+}
+
+Foo_2 Foo_2::sorted() const & {
+    // this object is either const or it is an lvalue; either way we can’t sort in place
+    // 原始值不能改变
+    cout << "call copied sorted" <<endl;
+    Foo_2 ret(*this);  // make a copy
+    std::sort(ret.data.begin(), ret.data.end());
+    return ret;
+}
+
+void test_overload_reference_func() {
+    Foo_2 a({2, 3, 5, 1, 4});
+    Foo_2 sorted_a = a.sorted();
+    Foo_2 sorted_b = Foo_2({8, 9, 6, 10, 7}).sorted();
+    sorted_a.print();
+    sorted_b.print();
+}
+
 
 int main(int argc, char *argv[]) {
     /*
      * 1. 需要destructor的基本需要copy-constructor 和 copy-assignment
      * 2. 需要copy constructor的基本需要copy-assignment， vice versa
+     * 3. 定义类move constructor和move
+     *
+     * assignment时，也必须定义copy ； Otherwise, those members
+are deleted by default.
      */
+    test_overload_reference_func();
+    test_reference_qualifier();
+    q_13_50_1();
+    q_13_50();
+    test_move_hasptr();
+    test_move_with_no_move_constructor();
+    test_rvalue_lvalue();
+    test_synthesized_move_constructor();
     q_13_46();
     test_rvalue_reference();
     q_13_44();

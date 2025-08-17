@@ -17,6 +17,15 @@ void Message::remove(Folder &f)
     f.remMsg(this); // remove this Message to f’s set of Messages
 }
 
+void Message::move_Folders(Message *m) {
+    folders = std::move(m->folders);
+    for (auto f: folders) {
+        f->remMsg(m);  // 所有保存m消息的folder都删除m
+        f->addMsg(this); // 每个f都添加当前的Message
+    }
+    m->folders.clear();  // 确保m的删除是harmless， （m的folder清空）
+}
+
 // Message 被copy时， 所有保存了当前message的Folder下都要拷贝一份
 void Message::add_to_Folders(const Message &m) {
     for (auto folder: m.folders) {
@@ -27,6 +36,10 @@ void Message::add_to_Folders(const Message &m) {
 Message::Message(const Message &m) : contents(m.contents), folders(m.folders){
     // 所有保存了当前message的Folder下都要拷贝一份，都执行add_to_Folders
     add_to_Folders(m);
+}
+
+Message::Message(Message &&m) : contents(std::move(m.contents)){
+    move_Folders(&m);
 }
 
 // 销毁message时，所有包含message的Folder下都要清除一次
@@ -52,6 +65,15 @@ Message &Message::operator=(const Message &rhs) {
     folders = rhs.folders;
     // 再lhsfolder下添加新的message
     add_to_Folders(rhs);
+    return *this;
+}
+
+Message & Message::operator=(Message &&rhs) {
+    if (this != &rhs) {
+        remove_from_Folders();  // 清除lhs所有folder
+        contents = std::move(rhs.contents);  // contents 使用move
+        move_Folders(&rhs);  // move the Folder pointers from rhs to this Message
+    }
     return *this;
 }
 
