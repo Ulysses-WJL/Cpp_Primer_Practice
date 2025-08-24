@@ -23,6 +23,7 @@ public:
     size_type size() const {return data->size();};  // 不修改非静态成员的 定义为const
     bool empty() const {return data->empty(); };
     void push_back(const std::string &t);
+    void push_back(std::string &&);   // q_13_55
     void pop_back();
     std::string &front() const;
     std::string &back() const;

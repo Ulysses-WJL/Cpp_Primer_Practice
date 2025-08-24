@@ -4,6 +4,8 @@
 
 
 class String {
+    friend std::ostream& operator<<(std::ostream& os, const String& s);
+    friend std::istream& operator>>(std::istream& is, String& s);
 public:
     String() : String("") {};
     String(const char *);
@@ -26,5 +28,6 @@ private:
     static std::allocator<char> alloc;
 };
 
-
+std::ostream& operator<<(std::ostream& os, const String& s);
+std::istream& operator>>(std::istream& is, String& s);
 #endif //STRING_H

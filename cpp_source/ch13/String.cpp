@@ -55,6 +55,21 @@ void String::free() {
     }
 }
 
+std::ostream & operator<<(std::ostream &os, const String &s) {
+    char *c = const_cast<char *>(s.c_str());
+    while (*c)
+        os << *c++;
+    // for (auto it = s.elements; it != s.end; ++it)
+    //     os << *it << "";  会打印最后的 null terminator
+    return os;
+}
+
+std::istream & operator>>(std::istream &is, String &s) {
+    for (auto it = s.elements; it != s.end; ++it)
+        is >> *it;
+    return is;
+}
+
 String::~String() {
     free();
 }

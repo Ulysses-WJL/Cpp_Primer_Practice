@@ -1,5 +1,6 @@
 #include "StrBlob.h"
 #include <stdexcept>
+#include <iostream>
 
 StrBlob::StrBlob(): data(std::make_shared<std::vector<std::string>>()) {
 
@@ -25,7 +26,13 @@ void StrBlob::check(size_type i, const std::string &msg) const {
 }
 
 void StrBlob::push_back(const std::string &t) {
+    std::cout << "using lvalue version" << std::endl;
     data->push_back(t);
+}
+
+void StrBlob::push_back(std::string &&t) {
+    std::cout << "using rvalue version" << std::endl;
+    data->push_back(std::move(t));
 }
 
 void StrBlob::pop_back() {

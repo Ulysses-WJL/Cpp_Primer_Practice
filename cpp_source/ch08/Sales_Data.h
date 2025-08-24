@@ -7,6 +7,9 @@ class Sales_Data {
     friend std::istream &read(std::istream &is, Sales_Data &item);
     friend std::ostream &print(std::ostream &os, const Sales_Data &item);
     friend Sales_Data add(const Sales_Data &lhs, const Sales_Data &rhs);
+    friend std::istream &operator>>(std::istream &is, Sales_Data &item);  // input
+    friend std::ostream &operator<<(std::ostream &os, const Sales_Data &item);  // output
+    friend Sales_Data operator+(const Sales_Data &, const Sales_Data &);  // addition
 
 public:
     Sales_Data(const std::string &s, unsigned n, double p):bookNo(s), units_sold(n), revenue(n*p)
@@ -23,10 +26,10 @@ public:
     std::string isbn() const { return bookNo; }
     Sales_Data& combine(const Sales_Data&);
 
-private:
-    inline double avg_price() const;
+    Sales_Data &operator+=(const Sales_Data &rhs);
 
 private:
+    inline double avg_price() const;
     std::string bookNo;
     unsigned units_sold = 0;
     double revenue = 0.0;
@@ -42,4 +45,8 @@ double Sales_Data::avg_price() const
 std::istream &read(std::istream &is, Sales_Data &item);
 std::ostream &print(std::ostream &os, const Sales_Data &item);
 Sales_Data add(const Sales_Data &lhs, const Sales_Data &rhs);
+
+std::istream &operator>>(std::istream &is, Sales_Data &item);  // input
+std::ostream &operator<<(std::ostream &os, const Sales_Data &item);  // output
+Sales_Data operator+(const Sales_Data &, const Sales_Data &);  // addition
 #endif

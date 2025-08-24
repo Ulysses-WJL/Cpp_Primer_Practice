@@ -1100,14 +1100,42 @@ Foo_2 Foo_2::sorted() const & {
     return ret;
 }
 
+// Foo_2 Foo_2::sorted() const & { return Foo_2(*this).sorted(); }
+
 void test_overload_reference_func() {
     Foo_2 a({2, 3, 5, 1, 4});
-    Foo_2 sorted_a = a.sorted();
-    Foo_2 sorted_b = Foo_2({8, 9, 6, 10, 7}).sorted();
+    Foo_2 sorted_a = a.sorted();  // 返回新对象
+    Foo_2 sorted_b = Foo_2({8, 9, 6, 10, 7}).sorted();  // rvalue sort in place
     sorted_a.print();
     sorted_b.print();
 }
 
+void q_13_55() {
+    StrBlob new_blob{"a", "b", "xxx"};
+
+    new_blob.push_back("xyz");
+    const string s = "aaa";
+    new_blob.push_back(s);
+}
+
+void q_13_56() {
+    /*
+    * What would happen if we defined sorted as:
+        Foo Foo::sorted() const & {
+        Foo ret(*this);
+        return ret.sorted();
+        }
+    ret继续调用sorted 方法，递归，直至溢出
+     */
+}
+
+void q_13_57() {
+    /*
+    * What if we defined sorted as:
+    Foo Foo::sorted() const & { return Foo(*this).sorted(); }
+    调用右值版本的sorted，能正常使用
+     */
+}
 
 int main(int argc, char *argv[]) {
     /*
@@ -1118,6 +1146,7 @@ int main(int argc, char *argv[]) {
      * assignment时，也必须定义copy ； Otherwise, those members
 are deleted by default.
      */
+    q_13_55();
     test_overload_reference_func();
     test_reference_qualifier();
     q_13_50_1();
