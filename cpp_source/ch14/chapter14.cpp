@@ -1,6 +1,8 @@
 #include  <iostream>
 #include "../ch08/Sales_Data.h"
 #include "../ch13/String.h"
+#include "Book.h"
+
 using std::cout;
 using std::endl;
 using std::cin;
@@ -57,8 +59,23 @@ void q_14_7() {
     cout << s << endl;
 }
 
+void q_14_15() {
+    Book b1(0, "Book1", "Alice", "2024", 15);
+    Book b2(0, "Book1", "Alice", "2024", 24);
+    Book b3(1, "Book2", "Alice", "2024", 50);
+    std::cout << std::boolalpha;
+    cout << (b1 > b3) << endl;
+    cout << (b1 == b2) << endl;
+    cout << (b1 != b3) << endl;
+    cout << (b1 + b2) << endl;
+    Book b4(cin);
+    std::cout << b4 << endl;
+
+}
+
 int main(int argc, char *argv[]) {
     int a = 1 + 2;
+    q_14_15();
     q_14_2();
     q_14_7();
 }

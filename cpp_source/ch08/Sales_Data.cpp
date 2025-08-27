@@ -64,3 +64,11 @@ Sales_Data operator+(const Sales_Data &sales_data, const Sales_Data &sales_data1
     Sales_Data sales_data2(sales_data);
     return sales_data2 += sales_data1;
 }
+
+bool operator==(const Sales_Data &lhs, const Sales_Data &rhs) {
+    return lhs.isbn() == rhs.isbn() && lhs.units_sold == rhs.units_sold && lhs.revenue == rhs.revenue;
+}
+
+bool operator!=(const Sales_Data &lhs, const Sales_Data &rhs) {
+    return !(lhs == rhs);
+}
