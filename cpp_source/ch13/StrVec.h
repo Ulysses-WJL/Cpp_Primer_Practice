@@ -5,6 +5,7 @@
 
 
 class StrVec {
+    friend std::ostream& operator<<(std::ostream& os, const StrVec& sv);
 public:
     StrVec() : elements(nullptr), first_free(nullptr), cap(nullptr) {}
     StrVec(std::initializer_list<std::string>);
@@ -18,6 +19,9 @@ public:
     StrVec(StrVec &&) noexcept;
     StrVec &operator=(const StrVec &);
     StrVec &operator=(StrVec &&) noexcept;
+    StrVec &operator=(std::initializer_list<std::string>);
+    const std::string& operator[](int) const;
+    std::string& operator[](int);
     ~StrVec();
 
     void push_back(const std::string &);
@@ -41,6 +45,6 @@ private:
     std::string *cap;  // pointer to one past the end of the array
 };
 
-
+std::ostream& operator<<(std::ostream& os, const StrVec& sv);
 
 #endif //STRVEC_H

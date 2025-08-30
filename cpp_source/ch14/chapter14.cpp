@@ -2,6 +2,7 @@
 #include "../ch08/Sales_Data.h"
 #include "../ch13/String.h"
 #include "Book.h"
+#include "../ch13/StrVec.h"
 
 using std::cout;
 using std::endl;
@@ -73,9 +74,33 @@ void q_14_15() {
 
 }
 
+void q_14_23() {
+    StrVec v;
+    v = {"1", "2", "3"};
+    cout << v;
+}
+
+void q_14_22() {
+    Sales_Data s1("aa", 1, 2.5);
+    s1 = "bbbb";
+    cout << s1 << endl;
+}
+
+void q_14_26() {
+    StrVec svec{"a", "b", "c"};
+    const StrVec csvec = svec;
+    svec[1] = 'a';
+    cout << "svec: " << svec << endl;
+    cout << "csvec: " <<  csvec << endl;
+}
+
+
 int main(int argc, char *argv[]) {
     int a = 1 + 2;
-    q_14_15();
+    q_14_26();
+    q_14_22();
+    q_14_23();
+    // q_14_15();
     // q_14_2();
     // q_14_7();
 }

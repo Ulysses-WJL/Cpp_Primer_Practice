@@ -99,6 +99,24 @@ StrVec & StrVec::operator=(StrVec &&rhs) noexcept {
     return *this;
 }
 
+StrVec & StrVec::operator=(std::initializer_list<std::string> il) {
+    std::cout << "initializer list assignment" << std::endl;
+    auto new_data = alloc_n_copy(il.begin(), il.end());
+    free();
+    elements = new_data.first;
+    first_free = cap = new_data.second;
+    return *this;
+}
+
+const std::string & StrVec::operator[](int i) const {
+    return elements[i];
+}
+
+
+std::string & StrVec::operator[](int i) {
+    return *(elements + i);
+}
+
 // void StrVec::reallocate() {
 //     std::cout << "call reallocate" << std::endl;
 //     // 分配2倍的空间
@@ -135,4 +153,12 @@ void StrVec::reallocate() {
     elements = first;
     first_free = last;  // dest 目前是one past the last constructed element
     cap = elements + new_capacity;
+}
+
+std::ostream & operator<<(std::ostream &os, const StrVec &sv) {
+    for (auto &s: sv) {
+        std::cout << s << " ";
+    }
+    std::cout << std::endl;
+    return os;
 }

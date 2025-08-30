@@ -27,6 +27,8 @@ public:
 
     std::string isbn() const { return bookNo; }
     Sales_Data& combine(const Sales_Data&);
+    Sales_Data &operator=(const std::string &);
+
 
     Sales_Data &operator+=(const Sales_Data &rhs);
 

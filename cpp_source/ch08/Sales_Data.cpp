@@ -15,6 +15,11 @@ Sales_Data& Sales_Data::combine(const Sales_Data& rhs)
     return *this;
 }
 
+Sales_Data & Sales_Data::operator=(const std::string &s) {
+    return *this = Sales_Data(s);
+    // return *this;
+}
+
 Sales_Data & Sales_Data::operator+=(const Sales_Data &rhs) {
     units_sold += rhs.units_sold;
     revenue += rhs.revenue;
