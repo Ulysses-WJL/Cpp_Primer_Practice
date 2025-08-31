@@ -25,6 +25,49 @@ void StrBlob::check(size_type i, const std::string &msg) const {
         throw std::out_of_range(msg);
 }
 
+bool operator==(const StrBlob &lhs, const StrBlob &rhs)
+{
+    return *lhs.data == *rhs.data;
+}
+
+bool operator!=(const StrBlob &lhs, const StrBlob &rhs)
+{
+    return !(lhs == rhs);
+}
+
+bool operator< (const StrBlob &lhs, const StrBlob &rhs)
+{
+    return std::lexicographical_compare(lhs.data->begin(), lhs.data->end(), rhs.data->begin(), rhs.data->end());
+}
+
+bool operator> (const StrBlob &lhs, const StrBlob &rhs)
+{
+    return rhs < lhs;
+}
+
+bool operator<=(const StrBlob &lhs, const StrBlob &rhs)
+{
+    return !(rhs < lhs);
+}
+
+bool operator>=(const StrBlob &lhs, const StrBlob &rhs) {
+    return !(lhs < rhs);
+}
+
+std::string& StrBlob::operator[](size_t n)
+{
+    check(n, "out of range");
+    return data->at(n);
+}
+
+const std::string& StrBlob::operator[](size_t n) const
+{
+    check(n, "out of range");
+    // return data->at(n);
+    return (*data)[n];
+}
+
+
 void StrBlob::push_back(const std::string &t) {
     std::cout << "using lvalue version" << std::endl;
     data->push_back(t);
@@ -93,6 +136,77 @@ StrBlobPtr &StrBlobPtr::incr() {
     return *this;  // return a reference to the incremented object
 }
 
+StrBlobPtr & StrBlobPtr::operator++() {
+    // if curr already points past the end of the container, can’t increment it
+    check(curr_idx, "increment past end of StrBlobPtr");
+    ++curr_idx;
+    return *this;
+}
+
+StrBlobPtr & StrBlobPtr::operator--() {
+    --curr_idx;  // 当curr_index 为0， 会变为一个large positive value
+    // if curr is zero, decrementing it will yield an invalid subscript
+    check(curr_idx, "decrement past begin of StrBlobPtr");
+    return *this;
+}
+
+StrBlobPtr StrBlobPtr::operator++(int) {
+    // postfix, 返回的是 old value，返回值类型不能是reference
+    StrBlobPtr ret = *this;
+    ++*this;  // 调用prefix 的++
+    return ret;
+}
+
+StrBlobPtr StrBlobPtr::operator--(int) {
+    StrBlobPtr ret = *this;
+    --*this;
+    return ret;
+}
+
+StrBlobPtr & StrBlobPtr::operator+=(size_t n) {
+    curr_idx += n;
+    check(curr_idx, "increment past end of StrBlobPtr");
+    return *this;
+}
+
+StrBlobPtr & StrBlobPtr::operator-=(size_t n) {
+    curr_idx -= n;
+    check(curr_idx, "decrement past begin of StrBlobPtr");
+    return *this;
+}
+
+StrBlobPtr StrBlobPtr::operator+(size_t n) const {
+    StrBlobPtr ret = *this;
+    return ret += n;
+}
+
+StrBlobPtr StrBlobPtr::operator-(size_t n) const {
+    StrBlobPtr ret = *this;
+    return ret -= n;
+}
+
+std::string & StrBlobPtr::operator*() const {
+    // dereference: 访问当前ptr（curr_idx 所指的string）
+    auto p = check(curr_idx, "dereference past end");
+    // 返回对应的string
+    return (*p)[curr_idx];  // *p：vector<string>，
+}
+
+std::string * StrBlobPtr::operator->() const {
+    // 实际使用deference 操作, 返回地址
+    return &this->operator*();
+}
+
+std::string & StrBlobPtr::operator[](size_t n) {
+    auto p = check(n, "iterator past end of StrBlobPtr");
+    return (*p)[n];
+}
+
+const std::string & StrBlobPtr::operator[](size_t n) const {
+    auto p = check(n, "iterator past end of StrBlobPtr");
+    return (*p)[n];
+}
+
 bool operator==(const StrBlobPtr &lhs, const StrBlobPtr &rhs) {
     // 检查use_count
     if (!lhs.wptr.expired() && !rhs.wptr.expired()) {
@@ -107,6 +221,36 @@ bool operator!=(const StrBlobPtr &lhs, const StrBlobPtr &rhs) {
     return !(lhs == rhs);
 }
 
+bool operator< (const StrBlobPtr &x, const StrBlobPtr &y)
+{
+    return x.curr_idx < y.curr_idx;
+}
+
+bool operator>(const StrBlobPtr &x, const StrBlobPtr &y)
+{
+    return x.curr_idx > y.curr_idx;
+}
+
+bool operator<=(const StrBlobPtr &x, const StrBlobPtr &y)
+{
+    return x.curr_idx <= y.curr_idx;
+}
+
+bool operator>=(const StrBlobPtr &x, const StrBlobPtr &y)
+{
+    return x.curr_idx >= y.curr_idx;
+}
+
+StrBlobPtr & StrBlobPtr_Ptr::operator*() const {
+    // 返回指向的 StrBlobPtr 的引用
+    return *pointer;
+}
+
+StrBlobPtr * StrBlobPtr_Ptr::operator->() const {
+    // 返回指向的 StrBlobPtr 的指针
+    return pointer;
+}
+
 bool operator==(const ConstStrBlobPtr &lhs, const ConstStrBlobPtr &rhs) {
     // 检查use_count
     if (!lhs.wptr.expired() && !rhs.wptr.expired()) {
@@ -119,6 +263,42 @@ bool operator==(const ConstStrBlobPtr &lhs, const ConstStrBlobPtr &rhs) {
 
 bool operator!=(const ConstStrBlobPtr &lhs, const ConstStrBlobPtr &rhs) {
     return !(lhs == rhs);
+}
+
+const std::string & ConstStrBlobPtr::operator[](size_t n) const {
+    auto p = check(n, "iterator past end of StrBlobPtr");
+    return (*p)[n];
+}
+
+ConstStrBlobPtr & ConstStrBlobPtr::operator+=(size_t n) {
+    curr_idx += n;
+    check(curr_idx, "increment past end of StrBlobPtr");
+    return *this;
+}
+
+ConstStrBlobPtr & ConstStrBlobPtr::operator-=(size_t n) {
+    curr_idx -= n;
+    check(curr_idx, "decrement past begin of StrBlobPtr");
+    return *this;
+}
+
+ConstStrBlobPtr ConstStrBlobPtr::operator+(size_t n) {
+    ConstStrBlobPtr ret = *this;
+    return ret += n;
+}
+
+ConstStrBlobPtr ConstStrBlobPtr::operator-(size_t n) {
+    ConstStrBlobPtr ret = *this;
+    return ret -= n;
+}
+
+std::string & ConstStrBlobPtr::operator*() const {
+    auto p = check(curr_idx, "iterator past end of StrBlobPtr");
+    return (*p)[curr_idx];
+}
+
+std::string * ConstStrBlobPtr::operator->() const {
+    return &this->operator*();
 }
 
 std::shared_ptr<std::vector<std::string> > ConstStrBlobPtr::check(size_t i, const std::string &msg) const {
@@ -141,4 +321,24 @@ ConstStrBlobPtr &ConstStrBlobPtr::incr() {
     check(curr_idx, "increment past end of ConstStrBlobPtr");
     ++curr_idx;
     return *this;
+}
+
+bool operator< (const ConstStrBlobPtr &lhs, const ConstStrBlobPtr &rhs)
+{
+    return lhs.curr_idx < rhs.curr_idx;
+}
+
+bool operator>(const ConstStrBlobPtr &lhs, const ConstStrBlobPtr &rhs)
+{
+    return lhs.curr_idx > rhs.curr_idx;
+}
+
+bool operator<=(const ConstStrBlobPtr &lhs, const ConstStrBlobPtr &rhs)
+{
+    return lhs.curr_idx <= rhs.curr_idx;
+}
+
+bool operator>=(const ConstStrBlobPtr &lhs, const ConstStrBlobPtr &rhs)
+{
+    return lhs.curr_idx >= rhs.curr_idx;
 }

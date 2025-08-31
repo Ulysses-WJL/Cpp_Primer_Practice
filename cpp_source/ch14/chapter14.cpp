@@ -2,6 +2,7 @@
 #include "../ch08/Sales_Data.h"
 #include "../ch13/String.h"
 #include "Book.h"
+#include "../ch12/StrBlob.h"
 #include "../ch13/StrVec.h"
 
 using std::cout;
@@ -94,9 +95,48 @@ void q_14_26() {
     cout << "csvec: " <<  csvec << endl;
 }
 
+void q_14_27_28() {
+    StrBlob sb1{"a", "b", "c"};
+    StrBlob sb2 = sb1;
+    sb2[1] = "z";
+    if (sb2 > sb1) {
+        for (StrBlobPtr iter = sb2.begin(); iter != sb2.end(); ++iter) {
+            // iter.operator++(0); postfix
+            // iter.operator++(); prefix
+            cout << iter.deref() << " ";
+        }
+        cout << endl;
+    }
+    ConstStrBlobPtr iter(sb1);
+    cout << "addition: " << (iter + 2).deref() << endl;
+}
+
+void q_14_30(){
+    StrBlob sb1{"a", "b", "c"};
+    StrBlob sb2 = sb1;
+    sb2[1] = "z";
+    if (sb2 > sb1) {
+        for (StrBlobPtr iter = sb2.begin(); iter != sb2.end(); ++iter) {
+            // iter.operator++(0); postfix
+            // iter.operator++(); prefix
+            cout << *iter << " ";
+        }
+        cout << endl;
+    }
+    StrBlobPtr p(sb1);
+    *p = "good luck";  // sb1 的第一个element 变为
+    cout << "0 : " << p->size() << endl;
+    cout << "1 : " << (*(p+1)).size() << endl;
+    cout << "2 : " << (p+2)->size() << endl;
+}
+
+
+
 
 int main(int argc, char *argv[]) {
     int a = 1 + 2;
+    q_14_30();
+    q_14_27_28();
     q_14_26();
     q_14_22();
     q_14_23();
