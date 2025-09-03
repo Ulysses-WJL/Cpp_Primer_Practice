@@ -1,4 +1,7 @@
-#include  <iostream>
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
 #include "../ch08/Sales_Data.h"
 #include "../ch13/String.h"
 #include "Book.h"
@@ -8,6 +11,8 @@
 using std::cout;
 using std::endl;
 using std::cin;
+using std::vector;
+using std::string;
 
 
 void q_14_1() {
@@ -130,11 +135,109 @@ void q_14_30(){
     cout << "2 : " << (p+2)->size() << endl;
 }
 
+struct absInt {
+    int operator() (int val) const {
+        return val < 0 ? -val : val;
+    }
+};
+
+class PrintString {
+public:
+    PrintString(std::ostream& o = cout, char c = ' ') : os(o), sep(c) {};
+    void operator()(const std::string& s) const {os << s << sep; }
+    void operator()(const int s) const {os << s << sep; }
+private:
+    std::ostream &os;
+    char sep;
+};
 
 
+void test_function_call() {
+    int i = -44;
+    absInt abs_func;
+    cout << "abs : " << abs_func(i) << endl;
+
+    vector<string> svec{"hello", "world", "come", "and", "have", "fun"};
+    PrintString ps(cout, '_');
+    ps("good luck");
+    cout << endl;
+    std::for_each(svec.begin(), svec.end(), ps);
+    cout << endl;
+    PrintString errors(std::cerr, '\n');
+    errors("first");
+    errors("second");
+    errors("third");
+    cout << endl;
+}
+
+// q_14_34
+
+class IfThenElse {
+public:
+    int operator() (bool a, int first, int second) {
+        return a ? first : second;
+    }
+};
+
+void q_14_34(bool arg) {
+    IfThenElse if_then_else;
+    auto res = if_then_else(arg, 1, 2);
+    cout << res << endl;
+}
+
+class ReadWrite {
+public:
+    ReadWrite(std::istream& is = cin): is(is) {}
+    string operator()() const {
+        string line;
+        if (std::getline(is, line))
+            return line;
+        else
+            return {};
+
+    }
+private:
+    std::istream& is;
+};
+
+void q_14_35() {
+    ReadWrite rd;
+    cout << rd() << endl;
+}
+
+void q_14_36() {
+    ReadWrite rd1;
+    vector<string> svec;
+    PrintString ps(cout, '_');
+    for (string tmp; !(tmp = rd1()).empty();) svec.push_back(tmp);
+    for_each(svec.begin(), svec.end(), ps);
+    cout << endl;
+}
+
+
+class IsEqual {
+public:
+    IsEqual(int val = 0) : val(val) {}
+    bool operator() (int a) const {return a == val;}
+private:
+    int val;
+};
+
+void q_14_37() {
+    vector<int> ivec{1, 2, 3, 4, 5, 2, 4, 2, 16, 57};
+    std::replace_if(ivec.begin(), ivec.end(), IsEqual(2), 222);
+    PrintString ps(cout, '_');
+    for_each(ivec.begin(), ivec.end(), ps);
+    cout << endl;
+}
 
 int main(int argc, char *argv[]) {
     int a = 1 + 2;
+    q_14_37();
+    // q_14_36();
+    // q_14_35();
+    q_14_34(true);
+    test_function_call();
     q_14_30();
     q_14_27_28();
     q_14_26();
