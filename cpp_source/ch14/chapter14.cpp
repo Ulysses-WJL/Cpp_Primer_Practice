@@ -231,8 +231,33 @@ void q_14_37() {
     cout << endl;
 }
 
+class ShorterString {
+public:
+    bool operator() (const std::string& s1, const std::string& s2) const {
+        return s1.size() < s2.size();
+    }
+};
+
+class SizeComp {
+public:
+    SizeComp(size_t n): sz(n) {}
+    bool operator()(const std::string& s1) const {return s1.size() >= sz;}  // 第一个大于sz的
+private:
+    size_t sz;  // captured
+};
+
+void test_lambda() {
+    vector<string> svec{"hello", "world", "come", "and", "have", "fun"};
+    std::stable_sort(svec.begin(), svec.end(), ShorterString());
+    auto res = std::find_if(svec.begin(), svec.end(), SizeComp(4));
+    std::for_each(res, svec.end(), PrintString(cout, ' '));
+    cout << endl;
+}
+
+
 int main(int argc, char *argv[]) {
     int a = 1 + 2;
+    test_lambda();
     q_14_37();
     // q_14_36();
     // q_14_35();
