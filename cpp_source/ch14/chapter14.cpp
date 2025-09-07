@@ -1,7 +1,11 @@
 #include <algorithm>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #include <string>
 #include <vector>
+#include <map>
+#include <functional>
 #include "../ch08/Sales_Data.h"
 #include "../ch13/String.h"
 #include "Book.h"
@@ -13,6 +17,11 @@ using std::endl;
 using std::cin;
 using std::vector;
 using std::string;
+using std::map;
+using std::sort;
+using namespace std::placeholders;
+using std::stable_sort;
+using std::size_t;
 
 
 void q_14_1() {
@@ -254,9 +263,225 @@ void test_lambda() {
     cout << endl;
 }
 
+class Range {
+public:
+    Range(size_t l, size_t u) : upper_limit(u), lower_limit(l) {}
+    bool operator() (const string& s) const {return lower_limit <= s.size() && s.size() <= upper_limit;}
+    size_t get_upper_limit() const {return upper_limit;}
+    size_t get_lower_limit() const {return lower_limit;}
+private:
+    size_t upper_limit;
+    size_t lower_limit;
+};
+
+void q_14_38(std::ifstream& ifs) {
+    vector<Range> ranges;
+    vector<size_t> limits{1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+    std::map<size_t, size_t> counter;
+    // 10个不同的区间
+    for (auto upper: limits) {
+        ranges.emplace_back(1, upper);
+        counter[upper] = 0;
+    }
+    std::stringstream ss;
+    string line, word;
+    while (std::getline(ifs, line)) {
+        cout << line << endl;
+        ss.clear();
+        ss.str(line);
+        while (ss >> word) {
+            for (auto range : ranges) {
+                if (range(word)) {
+                    ++counter[range.get_upper_limit()];
+                }
+            }
+        }
+
+    }
+    for (auto &p: counter) {
+        cout << "Length 1 ~ " << p.first << " , count: " << p.second << endl;
+    }
+}
+
+void q_14_39(std::ifstream& ifs) {
+    Range ranges[] = {{1, 9}, {10, 100}};
+    std::map<std::pair<size_t, size_t>, size_t> counter;
+    // 10个不同的区间
+    std::stringstream ss;
+    string line, word;
+    while (std::getline(ifs, line)) {
+        cout << line << endl;
+        ss.clear();
+        ss.str(line);
+        while (ss >> word) {
+            for (auto range : ranges) {
+                if (range(word)) {
+                    ++counter[std::make_pair(range.get_lower_limit(), range.get_upper_limit())];
+                }
+            }
+        }
+
+    }
+    for (auto &p: counter) {
+        cout << "Length  " << p.first.first  << " ~ " << p.first.second  <<  " , count: " << p.second << endl;
+    }
+}
+
+
+
+void elim_dups(vector<string> &words) {
+    sort(words.begin(), words.end());
+    auto last_unique = unique(words.begin(), words.end());
+    words.erase(last_unique, words.end());
+}
+
+void biggies_ch10(vector<string> &words, vector<string>::size_type sz) {
+    elim_dups(words);
+    // 按 长度排序
+    stable_sort(words.begin(), words.end(),
+        [](const string &s1, const string &s2){return s1.size() < s2.size();});
+    // 找到第一个 长度大于sz的位置，后面的都大于sz
+    // find_if 需要一个unary的 predicate 这里用普通函数需要2个参数完成
+    auto wc = find_if(words.begin(), words.end(),
+        [sz](const string &a){return a.size() >= sz;});
+    // print
+    for_each(wc, words.end(), [](const string &s){cout << s << " ";});
+    cout << endl;
+}
+
+// q_14_40
+class Predicate {
+public:
+    explicit Predicate(const size_t limit) : sz(limit) {}
+    bool operator() (const string& s) const {return s.size() >= sz;}
+private:
+    size_t sz;
+};
+
+
+void biggies(vector<string> &words, vector<string>::size_type sz) {
+    elim_dups(words);
+    stable_sort(words.begin(), words.end(),ShorterString());
+    auto wc = std::find_if(words.begin(), words.end(), Predicate(sz));
+    for_each(wc, words.end(), PrintString(cout, ' '));
+    cout << endl;
+}
+
+
+/*
+*Arithmetic    Relational        Logical
+plus<Type>        equal_to<Type>       logical_and<Type>
+minus<Type>       not_equal_to<Type>   logical_or<Type>
+multiplies<Type>  greater<Type>        logical_not<Type>
+divides<Type>     greater_equal<Type>
+modulus<Type>     less<Type>
+negate<Type>      less_equal<Type>
+ *
+ */
+
+void q_14_42() {
+    vector<int> nums{100, 200, 10000, 2040, 143, 1023, 1034};
+    // 类似 partial， _1 占位符表示check_size的第一个参数  变为unary
+    auto res = std::count_if(nums.cbegin(), nums.cend(), std::bind(std::greater<int>(), _1, 1024));
+    cout << "Greater than 1024: " << res << endl;
+    vector<string> words{"pooh", "pooh", "fee", "tee", "pooh"};
+    auto s = std::find_if(words.cbegin(), words.cend(), std::bind(std::not_equal_to<string>(), _1, "pooh"));
+    std::for_each(s, words.cend(), PrintString(cout, ' '));
+    cout << endl;
+    std::transform(nums.begin(), nums.end(), nums.begin(), std::bind(std::multiplies<int>(), _1, 2));
+    for_each(nums.cbegin(), nums.cend(), PrintString(cout, ' '));
+    cout << endl;
+}
+
+// ordinary function
+int add(int i, int j) { return i + j; }
+// lambda, which generates an unnamed function-object class
+auto mod = [](int i, int j) { return i % j; };
+// function-object class
+struct divide {
+    int operator()(int denominator, int divisor) {
+        return denominator / divisor;
+    }
+    static int call(int denominator, int divisor) {
+        return denominator / divisor;
+    }
+};
+void test_call_signature() {
+    // int(int, int)
+    std::map<string, int(*)(int, int)> binops;
+    binops.insert({"+", add});
+    binops.insert({"%", mod});
+    // binops.insert({"/", divide()});
+    binops.insert({"/", divide::call});  // 使用静态成员函数
+    cout << "mod : " << binops["%"](10, 3) << endl;
+}
+
+void test_function_type() {
+    // std::function<int(int, int)> f1 = add;
+    // resolve the ambiguity, 保存函数的指针
+    int (*fp)(int, int) = add;
+    std::function<int(int, int)> f2 = divide();
+    std::function<int(int, int)> f3 = mod;
+    std::function<int(int, int)> f4 = [](int i, int j){return i * j;};
+    cout << fp(4, 2) << endl;
+    cout << f2(4, 2) << endl;
+    cout << f3(4, 2) << endl;
+    cout << f4(4, 2) << endl;
+    std::map<string, std::function<int(int, int)>> binops = {
+        {"+", fp},
+        {"-", std::minus<int>()},
+        {"*", f4},
+        {"/", divide()},
+        {"%", mod}
+
+    };
+    cout << "mod : " << binops["%"](10, 3) << endl;
+    cout << "multiply :  " << binops["*"](10, 3) << endl;
+    cout << "add : " << binops["+"](10, 3) << endl;
+    cout << "divide : " << binops["/"](10, 3) << endl;
+    cout << "minus : " << binops["-"](10, 3) << endl;
+}
+
+
+// Conversion Operators
+class SmallInt {
+public:
+    // the compiler won’t automatically apply this conversion
+    SmallInt(int i=0): val(i) {
+        if (i < 0 || i > 255)
+            throw std::out_of_range("Bad SmallInt value");
+    }
+    // operate type() const;
+    explicit operator int() const {return val;}
+private:
+    size_t val;
+};
+
+
+void test_explicit_conversion() {
+    SmallInt si = 3;
+    // si + 3;  // error: implicit is conversion required, but operator int is explicit
+    static_cast<int>(si) + 3;
+}
+
+void q_14_45() {
+    Sales_Data s1("book1", 4, 2.5);
+    cout << "book no: " << static_cast<string>(s1) << endl;
+    cout << "avg price: " << static_cast<double>(s1) << endl;
+}
 
 int main(int argc, char *argv[]) {
     int a = 1 + 2;
+    q_14_45();
+    test_function_type();
+    test_call_signature();
+    q_14_42();
+    vector<string> words{
+        "1234","1234","1234","hi~", "alan", "alan", "cp"
+    };
+    biggies(words, 4);
+    std::ifstream ifs("/mnt/d/wjl/wjl_workspace/Cpp_Primer_Practice/cpp_source/ch14/nums.txt");
+    q_14_39(ifs);
     test_lambda();
     q_14_37();
     // q_14_36();

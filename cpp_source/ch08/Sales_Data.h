@@ -28,9 +28,9 @@ public:
     std::string isbn() const { return bookNo; }
     Sales_Data& combine(const Sales_Data&);
     Sales_Data &operator=(const std::string &);
-
-
     Sales_Data &operator+=(const Sales_Data &rhs);
+    explicit operator std::string() const {return bookNo;}  // 返回bookNo
+    explicit operator double() const {return avg_price();};  // 返回avg_price
 
 private:
     inline double avg_price() const;
