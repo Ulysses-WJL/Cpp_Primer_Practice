@@ -445,6 +445,8 @@ void test_function_type() {
 
 // Conversion Operators
 class SmallInt {
+    friend
+    SmallInt operator+(const SmallInt &a, const SmallInt &b) {return a.val + b.val;}
 public:
     // the compiler won’t automatically apply this conversion
     SmallInt(int i=0): val(i) {
@@ -452,7 +454,7 @@ public:
             throw std::out_of_range("Bad SmallInt value");
     }
     // operate type() const;
-    explicit operator int() const {return val;}
+    operator int() const {return val;}
 private:
     size_t val;
 };
@@ -468,6 +470,65 @@ void q_14_45() {
     Sales_Data s1("book1", 4, 2.5);
     cout << "book no: " << static_cast<string>(s1) << endl;
     cout << "avg price: " << static_cast<double>(s1) << endl;
+}
+
+
+void q_14_50() {
+    /*
+    *
+    *
+    struct LongDouble {
+        LongDouble(double = 0.0);
+        operator double();
+        operator float();
+    };
+    LongDouble ldObj;
+    int ex1 = ldObj;  // 不合法，没有从LongDouble到int的转换， 从double转换还是float转换存在二义性
+    float ex2 = ldObj;  // 合法
+     */
+
+}
+
+
+void q_14_51() {
+    /*
+    *
+    void calc(int);
+    void calc(LongDouble);
+    double dval;
+    calc(dval);  // void calc(int);
+     *
+     */
+}
+
+void ambiguous_add() {
+    SmallInt s1, s2;
+    SmallInt s3 = s1 + s2;
+    // int i = s3 + 0;  // Ambiguous operator call s3 转为int 还是 0 转为SmallInt
+}
+
+struct LongDouble {
+    // member operator+ for illustration purposes; + is usually a nonmember
+    LongDouble operator+(const SmallInt&);  // 1
+    // other members as in § 14.9.2 (p. 587)
+    operator double();
+    operator float();
+};
+
+void q_14_52() {
+
+
+    // LongDouble operator+(LongDouble&, double); 2
+    // SmallInt si;
+    // LongDouble ld;
+    // ld = si + ld;  // Ambiguous operator call.
+    // ld = ld + si;  1 是exactly match； 2需要将si转为double
+}
+
+void q_14_53() {
+    SmallInt s1;
+    // double d = s1 + 3.14;  // Ambiguous operator call.  3.14转为SmallInt 或是 s1转为int
+    double d = s1 + SmallInt(3.14);
 }
 
 int main(int argc, char *argv[]) {
