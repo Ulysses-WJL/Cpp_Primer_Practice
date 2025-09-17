@@ -185,6 +185,7 @@ void q_15_12() {
 // q_15_13
 class base {
 public:
+    base() = default;
     string name() { return basename; }
     virtual void print(std::ostream &os) { os << "base" << basename << endl;; }
 private:
@@ -192,6 +193,7 @@ private:
 };
 class derived : public base {
 public:
+    derived() = default;
     void print(std::ostream &os) override { base::print(os); os << " " << i << endl; }
 private:
     int i;
@@ -202,7 +204,49 @@ void q_15_13() {
     d.print(cout);
 }
 
+void q_15_14() {
+    cout << "===============q_15_14================" << endl;
+    base bobj;
+    base *bp1 = &bobj;
+    base &br1 = bobj;
+    derived dobj;
+    base *bp2 = &dobj;
+    base &br2 = dobj;
+
+    bobj.print(cout);  // 编译时，基类对象调用
+    dobj.print(cout);  // 编译时，派生类对象调用
+    bp1->name();  // 编译时，基类的指针 调用
+    bp2->name();  //  编译时，派生类指针 调用base的 name
+    br1.print(cout);  // 运行时，调用virtual function
+    br2.print(cout);  // 运行时， 调用virtual function
+    cout << "===============q_15_14================" << endl;
+}
+
+void q_15_17() {
+    // error: cannot declare variable ‘d’ to be of abstract type
+    // Disc_quote d;
+}
+
+class Base1 {
+protected:
+    int prot_mem; // protected member
+};
+class Sneaky : public Base1 {
+    friend void clobber(Sneaky&); // can access Sneaky::prot_mem
+    friend void clobber(Base1&); // can’t access Base::prot_mem
+    int j;  // j is private by default
+};
+
+
+// 派生类的成员和友类只能访问嵌入在派生类型对象中的基类对象中的受保护成员
+void clobber(Sneaky &s) { s.j = s.prot_mem = 0; }
+// clobber 不是Base1的友元
+// void clobber(Base1 &b) {b.prot_mem = 0;} // Member is inaccessible
+
 int main(int argc, char *argv[]) {
+
+    q_15_17();
+    q_15_14();
     q_15_13();
     q_15_11();
     circumventing_virtual_mechanism();
