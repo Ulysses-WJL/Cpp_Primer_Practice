@@ -5,7 +5,7 @@
 #ifndef QUOTE_H
 #define QUOTE_H
 #include <string>
-
+#include <iostream>
 
 class Quote {
 public:
@@ -14,6 +14,7 @@ public:
     std::string isbn() const { return bookNo; }
     virtual ~Quote() = default;   // 确保在使用基类指针或引用删除派生类对象时， 能够正常调用派生类的析构函数
     virtual double net_price(std::size_t n) const { return n * price; }
+    virtual void debug() {std::cout << "Quote info ... " << std::endl;}
 
 private:
     std::string bookNo;
