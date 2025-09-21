@@ -476,6 +476,24 @@ void q_15_7_1() {
     // 基类base class 通常需要一个virtual 析构函数
 }
 
+// Base Classes and Deleted Copy Control in the Derived
+class B1 {
+public:
+    // 可访问的默认构造函数，和被显式删除的copy constructor
+    B1() {};
+    B1(const B1&) = delete;
+};
+
+class Derived1: public B1 {
+    // no constructors
+};
+
+void test_deleted_copy_constructor() {
+    Derived1 d;
+    Derived1 d2(d);  //Derived1 的synthesized copy constructor is deleted
+    Derived1 d3(std::move(d));  // 会隐式调用Derived1的 copy constructor（deleted）
+}
+
 int main(int argc, char *argv[]) {
     test_name_collisions();
     q_15_21();
