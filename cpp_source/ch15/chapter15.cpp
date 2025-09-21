@@ -470,6 +470,11 @@ void test_hidden_virtual_func() {
     p3->fcn(42);
 }
 
+void q_15_7_1() {
+    // What kinds of classes need a virtual destructor?
+    // What operations must a virtual destructor perform?
+    // 基类base class 通常需要一个virtual 析构函数
+}
 
 int main(int argc, char *argv[]) {
     test_name_collisions();
