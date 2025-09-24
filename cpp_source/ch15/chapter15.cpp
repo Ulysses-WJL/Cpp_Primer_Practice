@@ -470,7 +470,7 @@ void test_hidden_virtual_func() {
     p3->fcn(42);
 }
 
-void q_15_7_1() {
+void q_15_24() {
     // What kinds of classes need a virtual destructor?
     // What operations must a virtual destructor perform?
     // 基类base class 通常需要一个virtual 析构函数
@@ -490,9 +490,54 @@ class Derived1: public B1 {
 
 void test_deleted_copy_constructor() {
     Derived1 d;
-    Derived1 d2(d);  //Derived1 的synthesized copy constructor is deleted
-    Derived1 d3(std::move(d));  // 会隐式调用Derived1的 copy constructor（deleted）
+    // Derived1 d2(d);  //Derived1 的synthesized copy constructor is deleted
+    // Derived1 d3(std::move(d));  // 会隐式调用Derived1的 copy constructor（deleted）
 }
+
+void q_15_25() {
+    //Why did we define a default constructor for Disc_quote?
+    //What effect, if any, would removing that constructor have on the behavior of Bulk_quote?
+    // Quote -> Disc_quote -> Bulk_quote; Disc_quote 的default constructor 会调用Quote的default constructor完成初始化。
+    // 删除后Bulk_quote的默认构造函数就无法调用它，来完成Disc_quote的成员的初始化
+}
+
+// Derived-Class Copy-Control Members
+
+class BaseCpCtr {
+public:
+    BaseCpCtr() = default;
+    BaseCpCtr(const int i=0): i(i){};
+    BaseCpCtr(const BaseCpCtr& rhs) : i(rhs.i){};  // copy construct
+    BaseCpCtr(const BaseCpCtr&& rhs) : i(rhs.i){};
+    BaseCpCtr& operator=(const BaseCpCtr& rhs){i = rhs.i; return *this;}  // copy assignment
+    BaseCpCtr& operator=(BaseCpCtr&& rhs){i = rhs.i; return *this;}  // move assignment
+    virtual ~BaseCpCtr() = default;
+private:
+    int i = 0;
+};
+
+class DerivedCpCtr final : public BaseCpCtr {
+public:
+    DerivedCpCtr() = default;
+    DerivedCpCtr(const DerivedCpCtr& d): BaseCpCtr(d), name(d.name) {};
+    DerivedCpCtr(DerivedCpCtr &&d)  noexcept : BaseCpCtr(std::move(d)), name(std::move(d.name)) {};
+    DerivedCpCtr& operator=(const DerivedCpCtr& rhs) {
+        BaseCpCtr::operator=(rhs);  // assigns the base part
+        name = rhs.name;
+        return *this;
+    }
+    DerivedCpCtr& operator=(DerivedCpCtr&& rhs)  noexcept {
+        BaseCpCtr::operator=(std::move(rhs));
+        name = std::move(rhs.name);
+        return *this;
+    }
+    // 派生类的析构函数 只需要清理派生类的members
+    // do what it takes to clean up derived members
+    ~DerivedCpCtr() override = default;
+private:
+    string name;
+};
+
 
 int main(int argc, char *argv[]) {
     test_name_collisions();
