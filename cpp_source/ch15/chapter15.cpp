@@ -1,4 +1,7 @@
 #include <iostream>
+#include <vector>
+#include <memory>
+
 #include "Quote.h"
 #include "Bulk_quote.h"
 
@@ -6,6 +9,7 @@ using std::cout;
 using std::endl;
 using std::cin;
 using std::string;
+using std::vector;
 
 // test dynamic binding
 
@@ -470,7 +474,7 @@ void test_hidden_virtual_func() {
     p3->fcn(42);
 }
 
-void q_15_7_1() {
+void q_15_24() {
     // What kinds of classes need a virtual destructor?
     // What operations must a virtual destructor perform?
     // 基类base class 通常需要一个virtual 析构函数
@@ -490,11 +494,104 @@ class Derived1: public B1 {
 
 void test_deleted_copy_constructor() {
     Derived1 d;
-    Derived1 d2(d);  //Derived1 的synthesized copy constructor is deleted
-    Derived1 d3(std::move(d));  // 会隐式调用Derived1的 copy constructor（deleted）
+    // Derived1 d2(d);  //Derived1 的synthesized copy constructor is deleted
+    // Derived1 d3(std::move(d));  // 会隐式调用Derived1的 copy constructor（deleted）
 }
 
+void q_15_25() {
+    //Why did we define a default constructor for Disc_quote?
+    //What effect, if any, would removing that constructor have on the behavior of Bulk_quote?
+    // Quote -> Disc_quote -> Bulk_quote; Disc_quote 的default constructor 会调用Quote的default constructor完成初始化。
+    // 删除后Bulk_quote的默认构造函数就无法调用它，来完成Disc_quote的成员的初始化
+}
+
+// Derived-Class Copy-Control Members
+
+class BaseCpCtr {
+public:
+    BaseCpCtr() = default;
+    BaseCpCtr(const int i=0): i(i){};
+    BaseCpCtr(const BaseCpCtr& rhs) : i(rhs.i){};  // copy construct
+    BaseCpCtr(const BaseCpCtr&& rhs) : i(rhs.i){};
+    BaseCpCtr& operator=(const BaseCpCtr& rhs){i = rhs.i; return *this;}  // copy assignment
+    BaseCpCtr& operator=(BaseCpCtr&& rhs){i = rhs.i; return *this;}  // move assignment
+    virtual ~BaseCpCtr() = default;
+private:
+    int i = 0;
+};
+
+class DerivedCpCtr final : public BaseCpCtr {
+public:
+    DerivedCpCtr() = default;
+    DerivedCpCtr(const DerivedCpCtr& d): BaseCpCtr(d), name(d.name) {};
+    DerivedCpCtr(DerivedCpCtr &&d)  noexcept : BaseCpCtr(std::move(d)), name(std::move(d.name)) {};
+    DerivedCpCtr& operator=(const DerivedCpCtr& rhs) {
+        BaseCpCtr::operator=(rhs);  // assigns the base part
+        name = rhs.name;
+        return *this;
+    }
+    DerivedCpCtr& operator=(DerivedCpCtr&& rhs)  noexcept {
+        BaseCpCtr::operator=(std::move(rhs));
+        name = std::move(rhs.name);
+        return *this;
+    }
+    // 派生类的析构函数 只需要清理派生类的members
+    // do what it takes to clean up derived members
+    ~DerivedCpCtr() override = default;
+private:
+    string name;
+};
+
+Bulk_quote get_book() {
+    cout << "Bulk_quote get_book()" << endl;
+    return Bulk_quote{"book5", 40.5, 200, 0.2};
+}
+
+double get_total_price(const Bulk_quote &a, std::size_t n) {
+    return a.net_price(n);
+}
+
+void q_15_26() {
+    cout << "==============15_26==============" << endl;
+    cout << "book1" << endl;
+    Bulk_quote book1;
+    cout << "book2" << endl;
+    Bulk_quote book2("book2", 40.5, 200, 0.1);
+    cout << "book3 copy constructor" << endl;
+    Bulk_quote book3(book2);
+    cout << "book1 copy assignment" << endl;
+    book1 = book2;
+    cout << "move assignment" << endl;
+    book2 = get_book();
+    cout << "move constructor" << endl;
+    Bulk_quote book4(get_book());  // NRVO/RVO编译器优化, 省略拷贝或移动操作的优化
+    Bulk_quote book5(std::move(get_book()));
+    book4.debug();
+    auto res = book4.net_price(200);
+    cout << "reference" << endl;
+    cout << get_total_price(book1, 200) << endl;
+    cout << "==============15_26==============" << endl;
+}
+
+// 使用container 保存继承层次的对象使，使用指针，而不是object
+// 15_28, 15_29
+void containers_and_inheritance() {
+    cout << "================containers_and_inheritance()===============" << endl;
+    vector<Quote> v;
+    v.emplace_back("book1", 25);
+    v.push_back(Bulk_quote{"book2", 25, 50, 0.1});
+    cout << v.back().net_price(60) << endl;  // 25 * 60 = 1500
+    vector<std::shared_ptr<Quote>> basket ;
+    basket.push_back(std::make_shared<Quote>("book1", 25));
+    basket.push_back(std::make_shared<Bulk_quote>("book2", 25, 50, 0.1));
+    cout << basket.back()->net_price(60) << endl; // 25*50*0.9 + 25 * 10  = 1125 + 250 = 1375
+    cout << "================containers_and_inheritance()===============" << endl;
+}
+
+
 int main(int argc, char *argv[]) {
+    containers_and_inheritance();
+    q_15_26();
     test_name_collisions();
     q_15_21();
     q_15_17();
