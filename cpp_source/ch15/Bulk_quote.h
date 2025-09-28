@@ -25,6 +25,8 @@ public:
     ~Bulk_quote() override;
     double net_price(std::size_t) const override;
     void debug() override {std::cout << "Bulk_quote" << std::endl;}
+    Bulk_quote *clone() const & override;
+    Bulk_quote *clone() && override;
 };
 
 
