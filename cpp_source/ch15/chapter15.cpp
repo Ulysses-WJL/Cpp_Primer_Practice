@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include <set>
 
 #include "Quote.h"
 #include "Bulk_quote.h"
@@ -588,8 +589,51 @@ void containers_and_inheritance() {
     cout << "================containers_and_inheritance()===============" << endl;
 }
 
+// 辅助类 隐藏指针操作
+class Basket {
+public:
+    void add_item(const std::shared_ptr<Quote> &sale) {
+        items.insert(sale);
+    }
+    void add_item(const Quote &sale) {
+        items.insert(std::shared_ptr<Quote>(sale.clone()));  // copy given object
+    }
+    void add_item(Quote &&sale) {  // sale 类型是 rvalue reference， sale是个lvalue
+        items.insert(std::shared_ptr<Quote>(std::move(sale).clone()));  // move
+    }
+    double total_receipt(std::ostream &os) const {
+        double sum = 0.0;
+        // upper_bound 找到下一个的位置
+        for (auto iter = items.cbegin(); iter != items.cend(); iter=items.upper_bound(*iter)) {
+            // *iter, 对应的shared_ptr, **iter 对应的Quote对象
+            sum += print_total(os, **iter, items.count(*iter));
+        }
+        return sum;
+    };
+private:
+    // 使用引用，避免拷贝
+    static bool compare(const std::shared_ptr<Quote> &lhs, const std::shared_ptr<Quote> &rhs) {
+        return lhs->isbn() < rhs->isbn();
+    }
+    // 使用compare作为less的 multiset， 可存储多个 相同名字的book
+    std::multiset<std::shared_ptr<Quote>, decltype(compare)*> items{compare};
+};
+
+void q_15_30 () {
+    cout << "==============15_30==============" << endl;
+    Basket b;
+    b.add_item(Bulk_quote("book1", 20, 50, 0.1));
+    b.add_item(Quote("book1", 20));
+    b.add_item(Bulk_quote("book2", 10, 50, 0.1));
+    b.add_item(Quote("book2", 10));
+    b.add_item(Quote("book2", 10));
+    b.total_receipt(cout);
+    cout << "==============15_30==============" << endl;
+}
+
 
 int main(int argc, char *argv[]) {
+    q_15_30();
     containers_and_inheritance();
     q_15_26();
     test_name_collisions();
