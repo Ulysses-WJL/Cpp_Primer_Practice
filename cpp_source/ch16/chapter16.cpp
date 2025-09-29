@@ -1,11 +1,13 @@
 //
 // Created by w30065676 on 2025/9/29.
 //
+#include <array>
 #include <iostream>
 #include <string>
 #include <string.h>
 #include <vector>
 #include <list>
+#include <memory>
 
 #include "../ch08/Sales_Data.h"
 
@@ -80,16 +82,107 @@ void q_16_4() {
     auto iter = my_find(ivec.cbegin(), ivec.cend(), 5);
     if (iter != ivec.cend())
         cout << "find:" << *iter << endl;
+    else
+        cout << "not find" << endl;
 
     auto iter2 = my_find(slist.cbegin(), slist.cend(), "fcc");
     if (iter2 != slist.cend())
         cout << "find:" << *iter2<< endl;
+    else
+        cout << "not find" << endl;
 
 }
 
+template <typename Array>
+void print(const Array& arr) {
+    for (auto const &item : arr) {
+        cout << item << " ";
+    }
+    cout << endl;
+}
 
+void q_16_5() {
+    const int ivec[10] = {1, 2, 3, 4, 5, 6};
+    const std::string s[5] = {"a", "b", "foo", "bar"};
+    print(ivec);
+    print(s);
+}
+
+template <typename Array, size_t N>
+Array* my_begin(Array (&arr)[N]) {
+    return arr;
+}
+
+template <typename Array, size_t N>
+Array* my_end(Array (&arr)[N]) {
+    return arr+N;
+}
+
+
+void q_16_6() {
+    const int ivec[] = {1, 2, 3, 4, 5, 6};
+    const std::string s[5] = {"a", "b", "foo", "bar"};
+    cout << "begin: " << *std::begin(ivec) << endl;
+    cout << "end: " << *(std::end(ivec) - 1) << endl;
+
+    cout << "begin: " << *my_begin(ivec) << endl;
+    cout << "end: " << *(my_end(ivec) - 1) << endl;
+
+}
+
+template <typename Array, size_t N>
+constexpr size_t get_size(const Array (&arr)[N]) {
+    return N;
+}
+
+void q_16_7() {
+    int ivec[10] = {1, 2, 3, 4, 5, 6};
+    cout << "array size: " << get_size(ivec) << endl;
+}
+
+// Class Template
+template <typename T>
+class Blob {
+public:
+    typedef T value_type;
+    /*
+     * std::vector<T>::size_type 是一个依赖类型（dependent type），它依赖于模板参数 T。在模板中，编译器在实例化之前无法知道
+     * std::vector<T>::size_type 是一个类型还是一个静态成员。因此，我们必须使用 typename 来告诉编译器这是一个类型。
+     */
+    // typedef typename std::vector<T>::size_type size_type;
+    using size_type = typename std::vector<T>::size_type;
+    // constructors
+    Blob() : data(std::make_shared<std::vector<T>>()) {};
+    Blob(std::initializer_list<T> il) : data(std::make_shared<std::vector<T>>(il)) {};
+    // number of elements in the Blob
+    size_type size() const { return data->size(); }
+    bool empty() const { return data->empty(); }
+    // add and remove elements
+    void push_back(const T &t) {data->push_back(t);}
+    // move version; see § 13.6.3 (p. 548)
+    void push_back(T &&t) { data->push_back(std::move(t)); }
+    void pop_back();
+    // element access
+    T& back();
+    T& operator[](size_type i); // defined in § 14.5 (p. 566)
+private:
+    std::shared_ptr<std::vector<T>> data;
+    // throws msg if data[i] isn’t valid
+    void check(size_type i, const std::string &msg) const;
+};
+
+// Instantiating a Class Template
+void test_class_template() {
+    Blob<int> ia;
+    Blob<int> ia2 = {0, 1, 2, 3, 4};
+    Blob<std::string> names = {"a", "b", "foo", "bar"};
+}
 
 int main(int argc, char **argv) {
+    test_class_template();
+    q_16_7();
+    q_16_6();
+    q_16_5();
     q_16_4();
     // q_16_3();
     test_nonetype_template_parameters();
