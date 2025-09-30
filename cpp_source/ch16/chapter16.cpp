@@ -4,12 +4,12 @@
 #include <array>
 #include <iostream>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <vector>
 #include <list>
 #include <memory>
-
 #include "../ch08/Sales_Data.h"
+#include "Blob.h"
 
 using std::cout;
 using std::cin;
@@ -139,37 +139,6 @@ void q_16_7() {
     int ivec[10] = {1, 2, 3, 4, 5, 6};
     cout << "array size: " << get_size(ivec) << endl;
 }
-
-// Class Template
-template <typename T>
-class Blob {
-public:
-    typedef T value_type;
-    /*
-     * std::vector<T>::size_type 是一个依赖类型（dependent type），它依赖于模板参数 T。在模板中，编译器在实例化之前无法知道
-     * std::vector<T>::size_type 是一个类型还是一个静态成员。因此，我们必须使用 typename 来告诉编译器这是一个类型。
-     */
-    // typedef typename std::vector<T>::size_type size_type;
-    using size_type = typename std::vector<T>::size_type;
-    // constructors
-    Blob() : data(std::make_shared<std::vector<T>>()) {};
-    Blob(std::initializer_list<T> il) : data(std::make_shared<std::vector<T>>(il)) {};
-    // number of elements in the Blob
-    size_type size() const { return data->size(); }
-    bool empty() const { return data->empty(); }
-    // add and remove elements
-    void push_back(const T &t) {data->push_back(t);}
-    // move version; see § 13.6.3 (p. 548)
-    void push_back(T &&t) { data->push_back(std::move(t)); }
-    void pop_back();
-    // element access
-    T& back();
-    T& operator[](size_type i); // defined in § 14.5 (p. 566)
-private:
-    std::shared_ptr<std::vector<T>> data;
-    // throws msg if data[i] isn’t valid
-    void check(size_type i, const std::string &msg) const;
-};
 
 // Instantiating a Class Template
 void test_class_template() {
