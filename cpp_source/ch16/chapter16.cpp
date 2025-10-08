@@ -145,9 +145,37 @@ void test_class_template() {
     Blob<int> ia;
     Blob<int> ia2 = {0, 1, 2, 3, 4};
     Blob<std::string> names = {"a", "b", "foo", "bar"};
+
+    Blob<char> c_a = {'a' , 'b', 'c'}; // BlobPtr<char> and operator==<char> are friends
+    Blob<char> c_b = {'b', 'c'};
+    cout << std::boolalpha << (c_a == c_b) << endl;
+    Blob<int> i_a; // BlobPtr<int> and operator==<int> are friends
+}
+
+// 将自己的类型参数成为友元
+// Foo 是Bar<Foo>的友元， int 是Bar<int> 的 友元
+template <typename Type>
+class Bar {
+    friend Type;
+};
+
+// Template Type Aliases
+template <typename T> using twin = std::pair<T, T>;
+template <typename T> using partNo = std::pair<T, unsigned>;
+
+void test_template_type_aliases() {
+    typedef Blob<std::string> StrBlob;
+    using IntBlob = Blob<int>;
+    StrBlob b = {"a", "b", "foo", "bar"};
+    IntBlob ia{1, 2, 3, 4};
+    twin<StrBlob> twin_str;
+    twin_str.first = {"a", "b"};
+    twin_str.second = {"foo", "bar"};
+    partNo<std::string> pno;
 }
 
 int main(int argc, char **argv) {
+    test_template_type_aliases();
     test_class_template();
     q_16_7();
     q_16_6();

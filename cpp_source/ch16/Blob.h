@@ -11,8 +11,21 @@
 
 
 // Class Template
+
+// forward declarations needed for friend declarations in Blob
+template <typename> class BlobPtr;
+template <typename> class Blob;
+template <typename T>
+bool operator==(const Blob<T>&, const Blob<T>&);
+template <typename T>
+bool operator!=(const Blob<T>&, const Blob<T>&);
+
 template <typename T>
 class Blob {
+    // add ‘<>’ after the class/function name
+    friend class BlobPtr<T>;
+    friend bool operator==<T>(const Blob<T> &, const Blob<T> &);
+    friend bool operator!=<T>(const Blob<T> &, const Blob<T> &);
 public:
     typedef T value_type;
     /*
@@ -45,6 +58,16 @@ private:
  * 模板类，它的定义（包括所有成员函数的定义）
  * 通常需要放在头文件中，因为模板的编译需要完整的定义信息。
  */
+
+template<typename T>
+bool operator==(const Blob<T> &lhs, const Blob<T> &rhs) {
+    return lhs.data == rhs.data;
+}
+
+template<typename T>
+bool operator!=(const Blob<T> &lhs, const Blob<T> &rhs) {
+    return !(lhs == rhs);
+}
 
 // 在类外定义成员函数
 // template <typename T>
@@ -84,4 +107,71 @@ void Blob<T>::pop_back() {
     check(0, "pop on empty Blob");
     data->pop_back();
 }
+
+
+template <typename T>
+class BlobPtr {
+public:
+    BlobPtr(): curr(0) { }
+    BlobPtr(Blob<T> &a, size_t sz = 0):wptr(a.data), curr(sz) { }
+    T& operator*() const
+    { auto p = check(curr, "dereference past end");
+        return (*p)[curr]; // (*p) is the vector to which this object points
+    }
+    // increment and decrement
+    // 在class scope内 模板不需要参数
+    BlobPtr& operator++(); // prefix operators
+    BlobPtr& operator--();
+    BlobPtr operator++(int);  // postfix 返回未执行操作的对象
+    BlobPtr operator--(int);
+private:
+    // check returns a shared_ptr to the vector if the check succeeds
+    std::shared_ptr<std::vector<T>> check(std::size_t, const std::string&) const;
+    // store a weak_ptr, which means the underlying vector might be destroyed
+    std::weak_ptr<std::vector<T>> wptr;
+    std::size_t curr; // current position within the array
+};
+
+template<typename T>
+BlobPtr<T> &BlobPtr<T>::operator++() {
+    check(curr, "out of range");
+    ++curr;
+    return *this;
+}
+
+template<typename T>
+BlobPtr<T> & BlobPtr<T>::operator--() {
+    --curr;
+    // if curr is zero, decrementing it will yield an invalid subscript
+    check(curr, "index小于起始");
+    return *this;
+}
+
+template<typename T>
+BlobPtr<T>  BlobPtr<T>::operator++(int) {
+    BlobPtr ret = *this;
+    ++*this;
+    return ret;
+}
+
+template<typename T>
+BlobPtr<T>  BlobPtr<T>::operator--(int) {
+    BlobPtr ret = *this;
+    --*this;
+    return ret;
+}
+
+template<typename T>
+std::shared_ptr<std::vector<T>> BlobPtr<T>::check(std::size_t i, const std::string &msg) const {
+    auto ret = wptr.lock();
+    if (!ret) {
+        throw std::runtime_error("Unbound StrBlobPtr");
+    }
+    if (i >= ret->size()) {
+        // StrBlob 没有这么多元素
+        throw std::out_of_range(msg);
+    }
+    return ret;
+}
+
 #endif //BLOB_H
