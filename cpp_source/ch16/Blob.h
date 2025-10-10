@@ -48,6 +48,10 @@ public:
     // element access
     T& back();
     T& operator[](size_type i); // defined in § 14.5 (p. 566)
+
+    const T& back() const;
+    const T& operator[](size_type i) const;
+
 private:
     std::shared_ptr<std::vector<T>> data;
     // throws msg if data[i] isn’t valid
@@ -100,6 +104,18 @@ T &Blob<T>::operator[](size_type i) {
     check(i, "out of range");
     return (*data)[i];
     // return data->at(i);
+}
+
+template<typename T>
+const T & Blob<T>::back() const {
+    check(0, "back on empty Blob");
+    return data->back();
+}
+
+template<typename T>
+const T & Blob<T>::operator[](size_type i) const {
+    check(i, "out of range");
+    return (*data)[i];
 }
 
 template<typename T>
