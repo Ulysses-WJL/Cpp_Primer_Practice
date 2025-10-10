@@ -19,7 +19,7 @@ using std::endl;
 // Templates are the foundation for generic programming in C++
 
 //Function Templates
-template <typename T>
+template <typename T>  // 早期标准中使用 class关键字声明模板参数
 int compare(const T &v1, const T &v2) {
     if (v1 < v2) return -1;
     if (v2 < v1) return 1;
@@ -174,7 +174,63 @@ void test_template_type_aliases() {
     partNo<std::string> pno;
 }
 
+// static members of class template
+template <typename T>
+class Foo {
+public:
+    static std::size_t count() {return ctr;}
+private:
+    static std::size_t ctr;
+};
+
+template <typename T>
+size_t Foo<T>::ctr = 110;
+
+void test_static_member() {
+    Foo<int> fi, fi2;
+    auto ct = Foo<int>::count();
+    ct = fi.count();
+    cout << "ctr: " << ct << endl;
+    // ct = Foo::count();  // Use of class template requires template argument list
+}
+
+void q_16_9() {
+    //What is a function template? What is a class template?
+    /*
+     * 一个函数模版就是一个公式，可用来生成针对特定类型的函数版本。
+     * 类模版是用来生成类的蓝图的，与函数模版的不同之处是，编译器不能为类模版推断模版参数类型。
+     * 如果我们已经多次看到，为了使用类模版，我们必须在模版名后的尖括号中提供额外信息。
+     */
+}
+
+void q_16_10() {
+    // What happens when a class template is instantiated?
+    // 一个类模版的每个实例都形成一个独立的类。
+}
+
+// 16_11
+
+template <typename elemType> class ListItem;
+template <typename elemType>
+class List {
+public:
+    List<elemType>();
+    List<elemType>(const List<elemType> &);
+    List<elemType>& operator=(const List<elemType> &);
+    ~List();
+    void insert(ListItem<elemType> *ptr, elemType value); // Use of class template requires template argument list
+private:
+    ListItem<elemType> *front, *end;  // Use of class template requires template argument list
+};
+
+void q_16_13() {
+    // Explain which kind of friendship you chose for the equality and relational operators for BlobPtr.
+    // one-on-one 一对一友好关系
+
+}
+
 int main(int argc, char **argv) {
+    test_static_member();
     test_template_type_aliases();
     test_class_template();
     q_16_7();
