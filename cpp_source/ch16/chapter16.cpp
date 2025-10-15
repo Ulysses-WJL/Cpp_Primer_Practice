@@ -10,6 +10,7 @@
 #include <memory>
 #include "../ch08/Sales_Data.h"
 #include "Blob.h"
+#include "Vec.h"
 
 using std::cout;
 using std::cin;
@@ -229,7 +230,73 @@ void q_16_13() {
 
 }
 
+
+// q_16_14, 16_15  nontype parameters
+template<unsigned H, unsigned W>
+class Screen {
+public:
+    using pos = std::string::size_type;
+    Screen() = default;
+    Screen(char c) :contents(H * W, c) {}
+    char get() const {return contents[cursor];}
+    Screen &move(pos c, pos r);
+    friend std::ostream &operator<<(std::ostream &os, Screen &c) {
+
+        for (unsigned i = 0; i < c.height; ++i) {
+            os<< c.contents.substr(i * W, W) << endl;
+        }
+        return os;
+    }
+
+    friend std::istream & operator>>(std::istream &is, Screen &c) {
+        char a;
+        is >> a;
+        c.contents = std::string(H * W, a);
+        return is;
+    }
+private:
+    pos cursor = 0;
+    pos height = H, width = W;
+    std::string contents;
+};
+
+template<unsigned H, unsigned W>
+Screen<H, W> &Screen<H, W>::move(pos c, pos r) {
+    cursor = r * width + c;
+    return *this;
+}
+
+void q_16_14_15() {
+    Screen<4, 8> screen('0');
+    cout << screen;
+    cin >> screen;
+    cout << screen;
+}
+
+void q_16_16() {
+    Vec<std::string> svec({"a", "b"});
+    svec.push_back("c");
+    cout << *svec.begin() << endl;
+    cout << svec << endl;
+
+}
+
+// Template Parameters
+typedef double A;
+template <typename A, typename B>
+void f(A a, B b) {
+    A tmp = a;
+    // parameter name cannot be reused
+    // double B;  // Local variable double B redeclares type template parameter typename B from an outer scope
+
+}
+
 int main(int argc, char **argv) {
+    f<int, int>(2, 3);
+    // q_16_16();
+    // q_16_14_15();
+    std::vector<std::vector<int>> ans;
+    ans.push_back({1});
     test_static_member();
     test_template_type_aliases();
     test_class_template();
