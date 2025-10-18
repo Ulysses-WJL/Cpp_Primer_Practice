@@ -291,7 +291,145 @@ void f(A a, B b) {
 
 }
 
+// Using Class Members That Are Types
+// 显式 声明 name 是 type
+template <typename T>
+typename T::value_type top(const T &c) {
+    if (!c.empty()) {
+        return c.back();
+    } else {
+        return typename T::value_type();
+    }
+}
+
+// default template arguments
+template <typename T, typename F = std::less<T>>
+int compare_1(const T &v1, const T &v2, F f = F()) {
+    if (f(v1, v2)) return -1;
+    if (f(v2, v1)) return 1;
+    return 0;
+}
+
+void test_default_template_arguments() {
+    int v1 = 2, v2 = 3;
+    cout << compare_1(v1, v2) << endl;
+    auto f = [](double a, double b) {
+        if (a < b) return -1;
+        if (b < a) return 1;
+        return 0;
+    };
+    cout << compare_1(12.5, 3.2, f) << endl;
+}
+
+// Template Default Arguments and Class Templates
+template <typename T = int>
+class Numbers {
+public:
+    Numbers(T v = 0) : val(v) {}
+private:
+    T val;
+};
+
+void test_number() {
+    Numbers<long double> lots_of_precision;
+    Numbers<> average_precision;  // 空的<> 使用默认type  int
+}
+
+void q_16_17() {
+    // What, if any, are the differences between a type parameter that is declared as a typename and one that is
+    // declared as a class? When must typename be used?
+    // 没有什么不同。当我们希望通知编译器一个名字表示类型时，必须使用关键字 typename，而不能使用 class。
+}
+
+
+template <typename T, typename U, typename V> void f1(T, U, V);
+template <typename T> T f2(int &t);
+template <typename T> T foo(T, unsigned int*);
+template <typename T> T f4(T, T);
+
+typedef char Ctype;  // Ctype 被隐藏
+template <typename Ctype> Ctype f5(Ctype a);
+void q_16_18() {
+    /*
+     * Explain each of the following function template declarations and identify whether any are illegal.
+     * Correct each error that you find.
+     */
+
+    /*
+    *
+    (a) template <typename T, U, typename V> void f1(T, U, V);
+    (b) template <typename T> T f2(int &T);
+    (c) inline template <typename T> T foo(T, unsigned int*);
+    (d) template <typename T> f4(T, T);
+    (e) typedef char Ctype;
+    template <typename Ctype> Ctype f5(Ctype a);
+
+     */
+}
+
+template <typename T>
+void func(const T &t) {
+    for (typename T::size_type i = 0; i < t.size(); ++i) {
+        cout << t[i] << " ";
+    }
+    cout << endl;
+}
+
+template <typename T>
+void func2(const T &t) {
+    for (auto it = t.begin(); it != t.end(); ++it) {
+        cout << *it << " ";
+    }
+    cout << endl;
+}
+
+void q_16_19_20() {
+    std::vector<int> v = {1, 2, 3, 4, 5};
+    func(v);
+    func2(v);
+}
+
+
+// member template
+class DebugDelete {
+public:
+    DebugDelete(std::ostream &s = std::cerr) : os(s) {}
+    template <typename T>
+    void operator()(T *p){
+        os << "deleting unique_ptr " << std::endl;
+        delete p;
+    }
+private:
+    std::ostream &os;
+};
+
+void test_debug_delete() {
+    double *p = new double;
+    DebugDelete d;
+    d(p);
+
+    int *ip = new int;
+    DebugDelete()(ip);
+
+    std::unique_ptr<int, DebugDelete> up(new int(32), DebugDelete());
+    std::unique_ptr<std::string, DebugDelete> up_str(new std::string("aaa"), DebugDelete());
+    cout << *up << endl;
+    cout << *up_str<< endl;
+}
+
+// member templates of class templates
+void test_Member_Templates_of_Class_Templates() {
+    std::vector<std::string> v1{"a", "b", "c"};
+    Blob<std::string> b1(v1.begin(), v1.end());
+    b1.push_back("d");
+    cout << b1.size() << endl;
+}
+
 int main(int argc, char **argv) {
+    test_Member_Templates_of_Class_Templates();
+    test_debug_delete();
+    q_16_19_20();
+    test_default_template_arguments();
     f<int, int>(2, 3);
     // q_16_16();
     // q_16_14_15();

@@ -37,6 +37,9 @@ public:
     // constructors
     Blob();
     Blob(std::initializer_list<T>);
+    // Member Templates of Class Templates
+    template <typename IT>
+    Blob(IT b, IT e);
     // number of elements in the Blob
     size_type size() const { return data->size(); }
     bool empty() const { return data->empty(); }
@@ -84,6 +87,11 @@ Blob<T>::Blob() : data(std::make_shared<std::vector<T>>()) {
 template<typename T>
 Blob<T>::Blob(std::initializer_list<T> il) :  data(std::make_shared<std::vector<T>>(il)) {
 
+}
+
+template<typename T>
+template<typename IT>
+Blob<T>::Blob(IT b, IT e) : data(std::make_shared<std::vector<T>>(b, e)){
 }
 
 template<typename T>
