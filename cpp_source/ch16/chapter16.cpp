@@ -11,6 +11,8 @@
 #include "../ch08/Sales_Data.h"
 #include "Blob.h"
 #include "Vec.h"
+#include "MyVector.h"
+#include "shared_pointer.hpp"
 
 using std::cout;
 using std::cin;
@@ -425,7 +427,84 @@ void test_Member_Templates_of_Class_Templates() {
     cout << b1.size() << endl;
 }
 
+void test_explict_instantiation() {
+    MyVector<int> vec(10);
+    int result = add(110, 231);
+}
+
+
+void q_16_25() {
+    /*
+     * Explain the meaning of these declarations:
+     * extern template class vector<string>;  // 显式实例化声明 （告诉编译器这些实例会在别处定义）
+     * template class vector<Sales_data>;  // 实例化定义 （在这里实际生成代码）
+     */
+}
+
+class NoDefalt {
+public:
+    NoDefalt(int x): value(x) {}
+    int get() const { return value; }
+private:
+    int value;
+};
+
+void q_16_26() {
+    /*
+     * Assuming NoDefault is a class that does not have a default constructor,
+     * can we explicitly instantiate vector<NoDefault>? If not, why not?
+     * No, An instantiation definition for a class template instantiates all the members of that template
+     * including inline member functions.
+     * 显式实例化会尝试编译 std::vector 的所有成员函数，包括那些要求元素类型具有默认构造函数的函数。
+     * 由于 NoDefault 没有默认构造函数，这些函数的实例化会失败，导致整个显式实例化失败。
+     * 在隐式实例化中，编译器只生成实际被使用的成员函数
+     */
+    std::vector<NoDefalt> v;
+    // std::vector<NoDefalt> v1(10); // 需要默认构造函数，NoDefalt中没有， 会失败
+    std::vector<NoDefalt> v2{12, 14};
+    cout << "v2: " << v2[0].get() << endl;
+    v.reserve(10);
+
+    v.emplace_back(42);
+}
+
+void q_16_27() {
+    /*
+    *隐式实例化：只有当模板类的完整定义（complete type） 被需要时，编译器才会实例化它。
+    不完整类型：声明指针、引用、函数参数时，通常不需要完整类型。
+    需要完整类型：定义对象、访问成员、sizeof、new 等操作需要完整类型。
+     *
+    *template <typename T> class Stack {	};
+    void f1(Stack<char>); 		//(a)  不会导致模板实例化  声明函数，没有使用该类型的完整定义，
+    class Exercise {
+        Stack<double> &rds;		//(b)  不会， 引用声明不需要知道所引用类型的完整定义，
+        Stack<int> si;			//(c)  会， 对象定义 编译器必须知道Stack<int>的完整定义
+    };
+    int main() {
+        Stack<char> *sc;		//(d) 不会， 指针声明
+        f1(*sc);				//(e) 会， 解引用，和值传递
+        int iObj = sizeof(Stack<string>);	//(f) 会，sizeof 需要完整类型来计算大小
+    }
+     *
+     */
+}
+
+void q_16_28() {
+    auto foo = wjl::SharedPointer<int> {new int(42)};
+    auto bar{foo};
+    std::cout << *foo << std::endl;
+    std::cout << foo.use_count() << std::endl;
+
+    auto string_ptr = wjl::SharedPointer<std::string>{ new std::string{ "Test" } };
+    std::cout << *string_ptr << std::endl;
+    std::cout << string_ptr->size() << std::endl;
+
+}
+
 int main(int argc, char **argv) {
+    q_16_28();
+    q_16_26();
+    test_explict_instantiation();
     test_Member_Templates_of_Class_Templates();
     test_debug_delete();
     q_16_19_20();
