@@ -13,6 +13,7 @@
 #include "Vec.h"
 #include "MyVector.h"
 #include "shared_pointer.hpp"
+#include "unique_pointer.h"
 
 using std::cout;
 using std::cin;
@@ -398,7 +399,7 @@ public:
     DebugDelete(std::ostream &s = std::cerr) : os(s) {}
     template <typename T>
     void operator()(T *p){
-        os << "deleting unique_ptr " << std::endl;
+        os << "deleting ptr " << std::endl;
         delete p;
     }
 private:
@@ -490,7 +491,8 @@ void q_16_27() {
 }
 
 void q_16_28() {
-    auto foo = wjl::SharedPointer<int> {new int(42)};
+    // 运行时绑定Deleter
+    auto foo = wjl::SharedPointer<int> {new int(42), DebugDelete()};
     auto bar{foo};
     std::cout << *foo << std::endl;
     std::cout << foo.use_count() << std::endl;
@@ -499,9 +501,53 @@ void q_16_28() {
     std::cout << *string_ptr << std::endl;
     std::cout << string_ptr->size() << std::endl;
 
+    // 编译时绑定deleter
+    unique_pointer<std::string> ps1(new std::string{ "Test" });
+    unique_pointer<std::string> ps2(ps1.release());
+    unique_pointer<std::string> ps3(new std::string{ "GoGoGo" });
+    ps2.reset(ps3.release());
+    auto ptr = ps2.get();
+    cout << "ps2 value: " << *ptr << endl;
+    ps2 = nullptr;
+    unique_pointer<std::string> ps4(new std::string{ "Foo" });
+    auto ptr2 = ps4.release();
+    cout << "ps3 value: " << *ptr2 << endl;
+    delete ptr2;
+}
+
+// template argument deduced
+
+// 不能直接将数组传递给期望引用的函数
+template <size_t N>
+void func(const int (&arr)[N]) {
+    for (size_t i = 0; i < N; ++i) {
+        cout << arr[i] << endl;
+    }
+}
+
+void process_array() {
+    int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9};  // a 的类型是 int[10]
+    func(a);
+}
+
+
+// argument types can differ but must be compatible
+template <typename A, typename B>
+int flexibleCompare(const A& v1, const B& v2)
+{
+    if (v1 < v2) return -1;
+    if (v2 < v1) return 1;
+    return 0;
+}
+
+void same_template_parameter_type() {
+    long lng = 123456789;
+    // compare(lng, 124); // No viable function Argument types: long, int.
+    flexibleCompare(lng, 1234);
 }
 
 int main(int argc, char **argv) {
+    same_template_parameter_type();
     q_16_28();
     q_16_26();
     test_explict_instantiation();

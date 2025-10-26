@@ -20,13 +20,13 @@ namespace wjl {
         // Binding the Deleter at Run Time
         SharedPointer() : ptr(nullptr), ref_count(new std::size_t(1)), deleter(wjl::Delete{}) {};
         // Ctor that takes raw pointer
-        explicit SharedPointer(T* raw_ptr) : ptr(raw_ptr), ref_count(new std::size_t(1)), deleter(wjl::Delete {}) {};
+        SharedPointer(T* raw_ptr, std::function<void(T*)> d=wjl::Delete()) : ptr(raw_ptr), ref_count(new std::size_t(1)), deleter(d) {};
         // Copy Ctor
         SharedPointer(const SharedPointer& rhs): ptr(rhs.ptr), ref_count(rhs.ref_count), deleter(rhs.deleter) {
             ++*ref_count;
         };
         // Move Ctor
-        SharedPointer(SharedPointer && rhs) noexcept: ptr(rhs.ptr), ref_count(rhs.ref_count), deleter(rhs.deleter) {
+        SharedPointer(SharedPointer && rhs) noexcept: ptr(rhs.ptr), ref_count(rhs.ref_count), deleter(std::move(rhs.deleter)) {
             rhs.ptr = nullptr;
             rhs.ref_count = nullptr;
         }
