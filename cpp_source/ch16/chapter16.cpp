@@ -546,7 +546,125 @@ void same_template_parameter_type() {
     flexibleCompare(lng, 1234);
 }
 
+// （普通）非模板参数的转换，应用常规的类型转换规则
+// 模板参数 要严格类型匹配
+template<typename T>
+bool is_greater_than(const T& value, int threshold) {
+    return value > threshold;
+}
+
+void test_normal_conversion() {
+    double price = 14.5;
+    float templature = 21.4f;
+    long bignum = 1001L;
+    cout << std::boolalpha;
+    cout << is_greater_than(bignum, 15.5f) << std::endl;  // float -> int
+    cout << is_greater_than(templature, 25L) << std::endl;  // long -> int
+    cout << is_greater_than(price, 999.1) << std::endl;  // double -> int
+}
+
+void q_16_32() {
+    // What happens during template argument deduction?
+    //  the compiler uses the arguments in a call to determine
+    //  the template parameters for a function template.
+    // 在模版实参推断过程中，编译器使用函数调用中的实参类型来寻找模版实参
+}
+
+void q_16_33() {
+    // Name two type conversions allowed on function arguments involved in template argument deduction.
+    // 1. const 转换，可以将一个非 `const` 对象的引用（或指针）传递给一个 `const` 的引用（或指针）形参。
+    // 2. 数组或函数指针转换：如果函数形参不是引用类型，则可以对数组或函数类型的实参应用正常的指针转换。
+    // 一个数组实参可以转换为一个指向其首元素的指针。类似的，一个函数实参可以转换为一个该函数类型的指针。
+}
+
+template <typename T>
+int compare_34(const T& v1, const T& v2) {
+    return 0;
+}
+
+void q_16_34() {
+    // c++ 数组类型包含大小信息
+    // 字符串字面量的类型 const char[3] const char[6]
+    // Inferred conflicting substitutions for template parameter T: char[3], char[6]
+    // compare_34("hi", "world");
+    compare_34("bye", "dad");  // T 类型是 char[4], 两个参数类型相同;
+}
+
+template <typename T>
+T calc(T a, int b) {
+    return a;
+};
+template <typename T> T fcn(T a, T b) {
+    return a;
+};
+
+void q_16_35() {
+    double d = 2.5;
+    float f = 2.5;
+    char c = 'c';
+
+    calc(c, 'c');  // T为char，第二个参数常规转换 char -> int
+    calc(d, f);  // T为double，第二个参数常规转换 float -> int
+    fcn(c, 'c');  // T为char
+    // fcn(d, f);   // illegal 模板参数严格转换，无法确认是double or float
+}
+
+template <typename T>
+void f1(T, T) {};
+template <typename T1, typename T2>
+void f2(T1, T2) {};
+
+void q_16_36() {
+    int i = 0, j = 42, *p1 = &i, *p2 = &j;
+    const int *cp1 = &i, *cp2 = &j;
+    f1(p1, p2); // int *, int *
+    f2(p1, p2);  // int *, int *
+    f1(cp1, cp2);  // const int *, const int *
+    f2(cp1, cp2);  // const int *, const int *
+    // f1(p1, cp1);  // 不合法 int* 和 const int*
+    f2(p1, cp1); // const int *, const int *
+}
+
+// Function-Template Explicit Arguments
+template <typename T1, typename T2, typename T3>
+T1 sum(T2 lhs, T3 rhs) {
+    return lhs + rhs;
+}
+
+void test_explict_template_argument() {
+    // 在函数名后<>内指定类型,  顺序要和模板参数列表的相同
+    int i = 12334;
+    long l = 22433134;
+    auto val3 = sum<long long>(i, l);
+    auto val4 = sum<long, int, long>(i, l);
+    cout << val3 << endl;
+    cout << val4 << endl;
+}
+
+void q_16_37() {
+    // cout << std::max(12, 12.5);
+    cout << std::max<double>(12, 12.5);  // 显式给出模板实参
+}
+
+void q_16_38() {
+    // When we call make_shared (§ 12.1.1, p. 451), we have to provide an explicit template argument.
+    // Explain why that argument is needed and how it is used.
+    // make_shared<int>(42);
+    // 如果不显示提供模版实参，那么 `make_shared` 无法推断要分配多大内存空间。
+}
+
+void q_16_39() {
+    // compare_34("hi", "hello");
+    compare_34<std::string>("hi", "hello");
+}
+
 int main(int argc, char **argv) {
+    q_16_39();
+    q_16_37();
+    test_explict_template_argument();
+    q_16_35();
+    q_16_34();
+    test_normal_conversion();
     same_template_parameter_type();
     q_16_28();
     q_16_26();
@@ -569,7 +687,7 @@ int main(int argc, char **argv) {
     q_16_4();
     // q_16_3();
     test_nonetype_template_parameters();
-    cout << compare(0.6, 0.5) << endl;
+    cout << compare_1(0.6, 0.5) << endl;
     cout << compare(10, 41) << endl;
     cout << compare(0, 0) << endl;
     int x = 124;
