@@ -8,6 +8,9 @@
 #include <vector>
 #include <list>
 #include <memory>
+#include <type_traits>
+#include <utility>
+#include <cstdint>
 #include "../ch08/Sales_Data.h"
 #include "Blob.h"
 #include "Vec.h"
@@ -658,7 +661,239 @@ void q_16_39() {
     compare_34<std::string>("hi", "hello");
 }
 
+
+// Trailing Return Types
+template <typename It>
+auto foo1(It beg, It end) -> decltype(*beg) {  // reference to element
+    return *beg;
+}
+
+void test_trailing_return_types_template() {
+    int a = 100;
+    int *p = &a;
+    int &ref = a;
+    std::vector<int> vi = {1,  2, 3, 4};
+    std::vector<std::string> svec = {"a", "fire", "go"};
+    auto &i = foo1(vi.begin(), vi.end());
+    auto &s  = foo1(svec.begin(), svec.end());
+}
+
+// type transformation
+template <typename It>
+auto foo2(It beg, It end) ->  // element by value
+    std::remove_reference_t<decltype(*beg)> {  // typename remove_reference<decltype(*beg)>::type
+    return *beg;
+}
+
+void test_type_transformation() {
+    std::vector<int> vi = {1,  2, 3, 4};
+    auto i = foo2(vi.begin(), vi.end());
+    cout << i << endl;
+}
+
+
+// 16.40
+template <typename It>
+auto fcn3(It beg, It end) ->
+    decltype(*beg + 0)  // string + 0 ill-formed, 需要支持+操作; 变成rvalue of ...
+{
+    // process the range
+    return *beg; // return a copy of an element from the range
+}
+
+void q_16_40() {
+    std::vector<int> vi = {1,  2, 3, 4};
+    std::vector<std::string> svec = {"a", "fire", "go"};
+    std::vector<float> fi = {1.1, 2.2, 3.3, 4.4};
+    // auto &i = fcn3(vi.begin(), vi.end());  Non-const lvalue reference 'i' to type int cannot bind to rvalue of type int
+    // auto &s  = fcn3(svec.begin(), svec.end());
+
+    auto i = fcn3(vi.begin(), vi.end());
+    auto f = fcn3(fi.begin(), fi.end());
+    cout << i << " " << f << endl;
+}
+
+template <typename T1, typename T2>
+auto sum(T1 lhs, T2 rhs) -> decltype(lhs + rhs) {
+    using ResultType = std::common_type_t<T1, T2>;
+    return static_cast<ResultType>(lhs) + static_cast<ResultType>(rhs);
+}
+
+void q_16_41() {
+    int lhs = 0x1fffffff;
+    int rhs = 0x7fffffff;
+    cout << sum(lhs, rhs) << endl;
+}
+
+// Function Pointers and Argument Deduction
+template <typename T>
+int compare_2_4(const T& lhs, const T& rhs) {
+    return lhs - rhs;
+}
+
+void func(int(*)(const std::string&, const std::string&)) {};
+void func(int(*)(const int&, const int&)) {};
+
+void test_function_pointer() {
+    // pf1 points to the instantiation int compare(const int&, const int&)
+    int (*pf1)(const int&, const int&) = compare_2_4;
+    func(pf1);
+    // func(compare);  // Ambiguous function call
+    func(compare_2_4<int>);  // explicitly specify which version of compare to instantiate
+}
+
+// Template Argument Deduction and References
+
+template <typename T>
+void fff(T &t) {};
+
+template <typename T>
+void fff2(const T &t) {};
+
+template <typename T>
+void fff3(T &&t) {};
+
+void template_argument_deduction() {
+    int i = 1;
+    const int ci = 1;
+    fff(i);  // i is an int; template parameter T is int
+    fff(ci);  // ci is a const int; template parameter T is const int
+    // fff(5);  // Non-const lvalue reference to type int cannot bind to rvalue of type int
+
+    fff2(i);  // i is an int; template parameter T is int
+    fff2(ci);  // ci is a const int, but template parameter T is int
+    fff2(5); // a const & parameter can be bound to an rvalue; T is int
+
+    fff3(42);  // argument is an rvalue of type int; template parameter T is int
+
+    // Reference Collapsing
+    // 引用折叠仅在间接创建对引用的引用时适用，例如在类型别名或模板参数中。
+    // X& &, X& &&,and X&& & all collapse to type X&
+    // The type X&& && collapses to X&&
+
+    // lvalue (e.g., i) to a function parameter that is an rvalue reference to a template type parameter
+    fff3(i); // argument is an lvalue; template parameter T is int&
+    fff3(ci); // argument is an lvalue; template parameter T is const int&
+
+}
+
+
+template <typename T>
+void g(T &&val) {cout << val;}
+
+void q_16_42_43() {
+    int i = 0;
+    const int ci = i;
+    g(i);  // since i is lvalue, T is deduced as int&, val is int& && collapsing to int&
+    g(ci);  //since ci is lvaue, T is deduced as const int&, val is const int& && collapsing to const int&
+    g(i * ci);  // since i * ci is rvalue, T is deduced as int, val is int&& && colapsing to int&&
+    g(i = ci);  // (i = ci) 返回的是lvalue , Hence T is deduced as int& val is int& && collapsing to int&.
+}
+template <typename T>
+void g1(T val) {cout << val;}
+void q_16_44_1() {
+    int i = 0;
+    const int ci = i;
+    g1(i);  // T is deduced as int
+    g1(ci);  // T is deduced as int, top-level consts in either the parameter or the argument are ignored
+    g1(i * ci);  // T is deduced as int, (i * ci) returns rvalue which is copied to T
+}
+
+template <typename T>
+void g2(const T& val) {cout << val;}
+void q_16_44_2() {
+    int i = 0;
+    const int ci = i;
+    g1(i);  // T is deduced as int , val : const int&
+    g1(ci);  //  T is deduced as int  , val : const int&
+    g1(i * ci);  //  T is deduced as int  , val : const int& ;  a const & parameter can be bound to an rvalue
+}
+
+template <typename T> void g3(T&& val) { std::vector<T> v; }
+
+void q_16_45() {
+    g3(42);  // argument is an rvalue of type int; template parameter T is int
+    int i = 42;
+    // g3(i);  // T 是 Int &;  std::vector<int &> illegal
+}
+
+void q_16_46() {
+    // for (size_t i = 0; i != size(); ++i)
+    //     alloc.construct(dest++, std::move(*elem++));
+    // 在每个循环中，对 `elem` 的解引用操作 `*` 当中，会返回一个左值，`std::move` 函数将该左值转换为右值，提供给 `construct` 函数。
+}
+
+// forward
+template <typename F, typename T1, typename T2>
+void flip1(F f, T1 t1, T2 t2)
+{
+    f(t2, t1);
+}
+
+void f(int v1, int& v2) {
+    cout << v1 << " " << ++v2 << endl;
+}
+
+// reference collapsing
+// A function parameter that is an rvalue reference to a template type parameter (i.e., T&&)
+// preserves the constness and lvalue/rvalue property of its corresponding argument.
+template <typename F, typename T1, typename T2>
+void flip2(F f, T1&& t1, T2&& t2)
+{
+    f(t2, t1);
+}
+
+void g(int &&i, int& j)
+{
+    cout << i << " " << ++j << endl;
+}
+
+template <typename F, typename T1, typename T2>
+void flip3(F f, T1&& t1, T2&& t2)
+{
+    f(std::forward<T2>(t2), std::forward<T1>(t1));
+    //保持值类别 , 完美转发
+}
+
+void test_flip() {
+    int i = 0;
+    f(42,i);
+    cout << "f changes its argument i : " << i << endl;
+    int j = 0;
+    // 按值传递导致引用丢失：f 的第二个参数是 int&，但在 flip1 中 t1 是按值传递的 T1 类型
+    flip1<void(int, int&)>(f, j, 0);  // 显式指定模板参数
+    cout << " f called through flip1 leaves j unchanged : "  << j << endl;
+    flip2<void(int, int&)>(f, j, 0);
+    cout << " reference collapsing : "  << j << endl;
+    // error: cannot bind rvalue reference of type ‘int&&’ to lvalue of type ‘int’
+    /*
+    * t2 在函数内部是左值
+    42 作为右值传递给 flip2
+    t2 的类型推导为 int&&（万能引用）
+    但是，在 flip2 函数体内，t2 是一个有名字的变量，所以它是左值
+    不能将左值 t2 传递给 g 的右值引用参数 i
+
+    t1 也有类似问题
+    i 作为左值传递给 flip2
+    t1 的类型推导为 int&（万能引用）
+    在函数体内 t1 是左值，可以传递给 g 的左值引用参数 j
+     */
+    // flip2<void(int &&, int&)>(g, i, 42);
+    int k = 0;
+    flip3<void(int &&, int&)>(g, k, 42);
+    cout << " 完美转发: "  << k << endl;
+}
+
 int main(int argc, char **argv) {
+    test_flip();
+    q_16_45();
+    q_16_44_2();
+    q_16_44_1();
+    q_16_42_43();
+    q_16_41();
+    q_16_40();
+    test_type_transformation();
+    test_trailing_return_types_template();
     q_16_39();
     q_16_37();
     test_explict_template_argument();
