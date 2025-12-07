@@ -3,6 +3,7 @@
 //
 #include <array>
 #include <iostream>
+#include <sstream>
 #include <string>
 #include <cstring>
 #include <vector>
@@ -21,6 +22,7 @@
 using std::cout;
 using std::cin;
 using std::endl;
+using std::string;
 
 
 // Templates are the foundation for generic programming in C++
@@ -884,7 +886,150 @@ void test_flip() {
     cout << " 完美转发: "  << k << endl;
 }
 
+// 模板函数和 重载
+
+template <typename T>
+string debug_rep(const T &t) {
+    cout << "first" << endl;
+    std::ostringstream ret;
+    ret << t;
+    return ret.str();  // return a copy of the string to which ret is bound
+}
+
+template <typename T>
+string debug_rep(T *p) {
+    cout << "second" << endl;
+    std::ostringstream ret;
+    ret << "pointer: " << p;
+    // print the pointer’s own value
+    if (p)
+        ret << " " << debug_rep(*p); // print the value to which p points
+    else
+        ret << " null pointer"; // or indicate that the p is null
+    return ret.str(); // return a copy of the string to which ret is bound
+}
+
+string debug_rep(const string &s) {
+    cout << "nontemplate" << endl;
+    return '"' + s + '"';
+}
+
+void test_rep() {
+    string s("hello world");
+    cout << debug_rep(s) << endl;  // 调用第一个
+    // 第一个： debug_rep(const string*&),  T 是string*
+    // 第二个： debug_rep(string *), T 是 string
+    cout << debug_rep(&s) << endl;
+
+//   debug_rep(const string*&), the instantiation of the first version of the template with T bound to const string*
+//   debug_rep(const string*), the instantiation of the second version of the template with T bound to const string
+    // resolves to debug_rep(T*)
+    const string *sp = &s;
+    cout << debug_rep(sp) << endl;
+}
+
+void test_nontemplate_and_template_overloads() {
+    string s("hi");
+    // a nontemplate function is preferred over equally good match(es) to a function template.
+    cout << debug_rep(s) << endl;
+}
+
+void test_c_style_strings() {
+    /*
+    * debug_rep(const T&),with T bound to char[10]
+    • debug_rep(T*),with T bound to const char (more specialized)
+    • debug_rep(const string&), which requires a conversion from const char* to string
+     */
+    cout << debug_rep("hello world") << endl;
+}
+
+// q_16-49
+template <typename T> void f1649(T t) {cout << "f1 " << t << endl; };
+template <typename T> void f1649(const T* t) { cout << "f2 " <<  *t << endl; };
+template <typename T> void g1649(T t) {cout << "g1 " << t << endl; };
+template <typename T> void g1649(T*t) {cout << "g2 " << *t << endl; };
+
+void q_16_49() {
+    int i = 42, *p = &i;
+    const int ci = 0, *p2 = &ci;
+    g1649(42);  // g(T)
+    g1649(p);  // g(T*)
+    g1649(ci);  // g(T)
+    g1649(p2);  // g(T * )
+    f1649(42); // f(T)
+    f1649(p);  // f(T)  T is bound to int*
+    f1649(ci);  // f(T)
+    f1649(p2);  // f(const T*)
+}
+
+// variadic template 可变参数模板， 接收可变数目的参数
+template<typename T, typename... Args>
+void foo1651(const T &t, const Args & ... rest) {
+    cout << "=================" << endl;
+    cout << sizeof...(rest) << endl;  // number of function parameters
+    cout << sizeof...(Args) << endl;  // number of type parameters
+    cout << "=================" << endl;
+}
+
+void q_16_51_52() {
+    int i = 0;
+    double d = 3.14;
+    string s = "how now brown cow";
+    foo1651(i, s, 42, d); // three parameters in the pack
+    foo1651(s, 42, "hi"); // two parameters in the pack
+    foo1651(d, s); // one parameter in the pack
+    foo1651("hi"); // empty pack
+}
+
+
+// 非可变参数版本的  需要先定义，否则  no matching function for call
+template<typename T>
+std::ostream &print_1653(std::ostream &os, const T &t) {
+    return os << t;
+}
+
+template <typename T, typename... Args>
+std::ostream &print_1653(std::ostream &os, const T &t, const Args &... rest) {
+    // os << t << ", ";
+    return print_1653(os << t << ", ",  rest...);
+}
+
+void q_16_53() {
+    int i = 42;
+    double d = 3.14;
+    string s = "go go go";
+    const int ci = 0, *p = &i;
+    print_1653(cout, i, d, s, ci, *p);
+    cout << endl;
+    print_1653(cout, i, d, s);
+    cout << endl;
+    print_1653(cout, i);
+    cout << endl;
+}
+
+// Pack Expansions
+template <typename ...Args>
+std::ostream &errorMsg(std::ostream &os, const Args ... args) {
+    return print_1653(cout, debug_rep(args)...);
+}
+
+void q_16_56() {
+    cout << "===========16 56============" << endl;
+    int i = 42;
+    double d = 3.14;
+    string s = "go go go";
+    errorMsg(cout, i, d, s) << endl;
+    cout << "===========16 56============" << endl;
+}
+
 int main(int argc, char **argv) {
+    q_16_56();
+    q_16_53();
+    q_16_51_52();
+    q_16_49();
+    test_c_style_strings();
+    test_nontemplate_and_template_overloads();
+    test_rep();
     test_flip();
     q_16_45();
     q_16_44_2();
