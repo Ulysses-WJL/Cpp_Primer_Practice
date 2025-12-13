@@ -26,6 +26,7 @@ public:
 
     void push_back(const std::string &);
     void push_back(std::string &&);
+    template <typename... Args> void emplace_back(Args&&...);
     size_t size() const {return first_free - elements;}
     size_t capacity() const {return cap - elements;}
     std::string *begin() const {return elements;}
@@ -44,6 +45,12 @@ private:
     std::string *first_free;  // pointer to the first free element in the array
     std::string *cap;  // pointer to one past the end of the array
 };
+
+template<typename ... Args>
+void StrVec::emplace_back(Args &&...args) {
+    chk_n_alloc();
+    alloc.construct(first_free++, std::forward<Args>(args) ...);
+}
 
 std::ostream& operator<<(std::ostream& os, const StrVec& sv);
 

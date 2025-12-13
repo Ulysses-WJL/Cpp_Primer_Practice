@@ -18,6 +18,7 @@
 #include "MyVector.h"
 #include "shared_pointer.hpp"
 #include "unique_pointer.h"
+#include "../ch13/StrVec.h"
 
 using std::cout;
 using std::cin;
@@ -1021,8 +1022,91 @@ void q_16_56() {
     errorMsg(cout, i, d, s) << endl;
     cout << "===========16 56============" << endl;
 }
+void q_16_58() {
+    StrVec myVector;
+    myVector.push_back("hello world");
+    myVector.emplace_back(10, 'c');
+    for (auto &item : myVector) {
+        cout << item << endl;
+    }
+}
+
+template <typename T, typename... Args>
+std::shared_ptr<T> my_make_shared(Args&& ...args) {
+    return std::shared_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+void q_16_60_61() {
+    // `make_shared` 是一个可变模版函数，它将参数包转发然后构造一个对象，再然后一个指向该对象的智能指针。
+    // template<typename _Tp, typename... _Args>
+    // inline shared_ptr<_Tp>
+    // make_shared(_Args&&... __args)
+    // {
+    //     typedef typename std::remove_cv<_Tp>::type _Tp_nc;
+    //     return std::allocate_shared<_Tp>(std::allocator<_Tp_nc>(),
+    //                      std::forward<_Args>(__args)...);
+    // }
+    auto my_shared_ptr = my_make_shared<int>(42);
+    cout << *my_shared_ptr<< endl;
+}
+
+// 模板特化 template specialization 允许为特定的类型或条件提供模板的特定实现
+
+// 通用
+template <typename T>
+T max(T a, T b) {
+    cout << "使用通用" << endl;
+    return a > b ? a : b;
+}
+
+// 全特化，  特化必须出现在主模板之后
+template<>
+const char* max<const char *>(const char* a, const char* b) {
+    cout << "全特化" << endl;
+    return strcmp(a, b) > 0 ? a : b;
+}
+
+void test_template_specializations() {
+    max(5, 34);
+    max("gogogo", " hello world ");
+}
+
+// Class-Template Partial Specializations 偏特化
+
+// 通用模板
+template<typename T, typename U>
+class Pair {
+    T first;
+    U second;
+};
+
+// 偏特化：当两个类型相同时
+template<typename T>
+class Pair<T, T> {
+    T first;
+    T second;
+    bool isSameType = true;
+};
+
+// 偏特化：针对指针类型
+template<typename T, typename U>
+class Pair<T*, U*> {
+    T* first;
+    U* second;
+    bool arePointers = true;
+};
+
+void test_class_partial_template_specializations() {
+    Pair<int, double> p1;
+    Pair<int, int> p2;  // 偏特化：相同类型
+    Pair<int*, double*> p3;     // 偏特化：指针类型
+}
+
 
 int main(int argc, char **argv) {
+    test_template_specializations();
+    q_16_60_61();
+    q_16_58();
     q_16_56();
     q_16_53();
     q_16_51_52();
