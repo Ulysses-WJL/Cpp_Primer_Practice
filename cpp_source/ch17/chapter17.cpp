@@ -6,7 +6,7 @@
 #include <list>
 #include <numeric>
 #include <bitset>
-
+#include <regex>
 #include "../ch08/Sales_Data.h"
 
 using std::cin;
@@ -239,7 +239,82 @@ void q_17_11() {
     std::cout << grade(ans, stu_ans) << std::endl;
 }
 
+// 正则表达式
+void test_regex() {
+    // 完全匹配
+    string str = "Hello123";
+    std::regex pattern1(R"([A-Za-z]+\d{3}$)");
+    if (std::regex_match(str, pattern1)) {
+        cout << "完全匹配" << endl;
+    }
+    // 捕获分组
+    std::regex pattern2(R"((\w+)\s+(\d+))");
+    string str2 = "hello  1234";
+    std::smatch results; // 匹配的结果 string
+    if (std::regex_match(str2, results, pattern2)) {
+        cout << "完全匹配: " << results[0] << endl;
+        cout << "第一组: " << results[1] << endl;    // "abc"
+        cout << "第二组: " << results[2] << endl;    // "123"
+    }
+    // 搜索匹配, 找 第一个匹配到的
+    std::regex phone_pat(R"((\d{3})-(\d{4})-(\d{4}))");
+    string str3 = "我的电话是 138-1234-5678，另一个是 139-8765-4321";
+    if (std::regex_search(str3, results, phone_pat)) {
+        cout << "找到电话: " << results[0] << endl;      // 138-1234-5678
+        cout << "区号: " << results[1] << endl;          // 138
+    }
+
+    // 迭代器 所有匹配到的
+    auto words_begin = std::sregex_iterator(str3.begin(), str3.end(), phone_pat);
+    auto words_end = std::sregex_iterator();
+    for (auto it = words_begin; it != words_end; ++it) {
+        // std::smatch match = *it;
+        // cout << "号码: " << match.str() << endl;
+        cout << "号码: " << it->str()
+            << "位置: " << it->position()
+            << "长度: " << it->length() << endl;
+    }
+
+    try {
+        // error: missing close bracket after alnum; the constructor will throw
+        std::regex r("[[:alnum:]+\\.(cpp|cxx|cc)$", std::regex::icase);
+    } catch (std::regex_error &e) {
+        cout << e.what() << "\ncode: " << e.code() << endl;
+    }
+
+    std::regex r("[[:alnum:]]+\\.(cpp|cxx|cc)$", std::regex::icase);  // c++字符串中使用 双转义符
+    // must match the type of the input sequence
+    std::cmatch c_results;
+    if (std::regex_search("main.cpp", c_results, r)) {  // smatch需要 string 的输入而不是 char*
+        cout << results.str() << endl;
+    }
+
+    // string filename;
+    // while (cin >> filename)
+    //     if (regex_search(filename, results, r))
+    //         cout << results.str() << endl; // print the current match
+
+    // 替换 regex_replace
+    // 简单替换
+    string text = "C++ is cool, C++ is powerful";
+    std::regex r1(R"(C\+\+)");
+    string result = std::regex_replace(text, r1, "Python");
+    cout << result << endl;
+
+    // 使用捕获组 替换
+    std::string date = "2024-01-15";
+    std::regex date_pattern(R"((\d{4})-(\d{2})-(\d{2}))");
+    std::string new_date = std::regex_replace(
+        date, date_pattern, "$2/$3/$1");
+    cout << new_date << endl;
+
+    string fmt = "年: $1, 月: $2 日: $3";
+    string formatted = std::regex_replace(date, date_pattern, fmt);
+    cout << formatted << endl;
+}
+
 int main(int argv, char** argc) {
+    test_regex();
     q_17_11();
     q_17_10();
     test_bitset_operation();
