@@ -7,6 +7,7 @@
 #include <numeric>
 #include <bitset>
 #include <regex>
+#include <random>
 #include "../ch08/Sales_Data.h"
 
 using std::cin;
@@ -313,7 +314,96 @@ void test_regex() {
     cout << formatted << endl;
 }
 
+// 随机数
+// 常用引擎：
+// std::default_random_engine      // 默认引擎（实现依赖）
+// std::mt19937                    // 32位梅森旋转算法（最常用）
+// std::mt19937_64                 // 64位梅森旋转算法
+// std::ranlux48                   // 高质量随机数，速度较慢
+// std::minstd_rand                // 线性同余生成器
+
+// 均匀分布
+// std::uniform_int_distribution<int>      // 整数均匀分布
+// std::uniform_real_distribution<double>  // 浮点数均匀分布
+//
+// // 其他常见分布
+// std::normal_distribution<double>        // 正态分布
+// std::bernoulli_distribution            // 伯努利分布（true/false）
+// std::binomial_distribution<int>        // 二项分布
+// std::poisson_distribution<int>         // 泊松分布
+// std::exponential_distribution<double>  // 指数分布
+
+// 创建可复用的随机函数
+class RandomGenerator {
+private:
+    std::mt19937 gen;
+    std::uniform_int_distribution<int> distrib;
+
+public:
+    RandomGenerator(int min, int max)
+        : gen(std::random_device{}()), distrib(min, max) {}
+
+    int operator()() {
+        return distrib(gen);
+    }
+};
+
+void test_random() {
+    std::default_random_engine e;  // 随机数引擎 generates random unsigned integers
+    for (size_t i = 0; i != 10; ++i) {
+        cout << e() << " ";
+    }
+    cout << endl;
+
+    // 1. 创建随机设备 （seed）
+    std::random_device rd;
+    // 2. 随机数引擎
+    std::mt19937 gen(rd());  // 梅森旋转
+    // 3. 分布 范围
+    std::uniform_int_distribution<int> distrib(0, 99);
+    std::normal_distribution<double> distrib_d(0.0, 1.0);  // mean 0，std: 1
+    // 4. 生成随机数
+    for (int i = 0; i != 10; ++i) {
+        std::cout << distrib(gen) << " ";
+        std::cout << distrib_d(gen)
+
+        << " ";
+    }
+    std::cout << endl;
+
+    RandomGenerator dice(1, 6);
+    int roll = dice();  // 掷骰子
+}
+
+unsigned random_gen() {
+    // 引擎对象应该重用，而不是每次需要随机数时都新建
+    static std::default_random_engine e;
+    static std::uniform_int_distribution<unsigned> ud;
+    return ud(e);
+}
+
+unsigned random_gen(int seed) {
+    static std::default_random_engine e(seed);
+    static std::uniform_int_distribution<unsigned> ud;
+    return ud(e);
+}
+
+unsigned random_gen(int seed, int min_val, int max_val) {
+    static std::default_random_engine e(seed);
+    static std::uniform_int_distribution<unsigned> ud(min_val, max_val);
+    return ud(e);
+}
+
+void q_17_28_29_30() {
+    std::string temp;
+    while(std::cin >> temp)
+        std::cout << std::hex << random_gen(19, 1, 10) << std::endl;
+}
+
+
 int main(int argv, char** argc) {
+    q_17_28_29_30();
+    test_random();
     test_regex();
     q_17_11();
     q_17_10();
