@@ -6,6 +6,9 @@
 #include <list>
 #include <numeric>
 #include <bitset>
+#include <iomanip>
+#include <format>
+// #include <print>
 #include <regex>
 #include <random>
 #include "../ch08/Sales_Data.h"
@@ -400,9 +403,49 @@ void q_17_28_29_30() {
         std::cout << std::hex << random_gen(19, 1, 10) << std::endl;
 }
 
+// 格式化输入 输出
+void test_io_format() {
+    // boolalpha noboolalpha
+    cout << "default bool values: " << true << " " << false
+    << "\nalpha bool values: " << std::boolalpha
+    << true << " " << false << endl;
+    // 修改整数 输出进制
+    cout << std::showbase; // show the base when printing integral values  noshowbase
+    cout << "default: " << 20 << " " << 1024 << endl;
+    cout << "octal: " << std::oct << 20 << " " << 1024 << endl;
+    cout << "hex: " << std::hex << 20 << " " << 1024 << endl;
+    cout << "decimal: " << std::dec << 20 << " " << 1024 << endl;
+
+    // 浮点数的 小数位
+    // cout.precision reports the current precision value
+    cout << "Precision: " << cout.precision()
+    << ", Value: " << sqrt(2.0) << endl;
+    // cout.precision(12) asks that 12 digits of precision be printed
+    cout.precision(12);
+    cout << "Precision: " << cout.precision()
+    << ", Value: " << sqrt(2.0) << endl;
+    // alternative way to set precision using the setprecision manipulator
+    cout << std::setprecision(3);
+    cout << "Precision: " << cout.precision()
+    << ", Value: " << sqrt(2.0) << endl;
+}
+
+void test_format() {
+    // c++ 20 std::format
+    int apples = 5;
+    double price = 3.14;
+    string fruit  = "apples";
+    cout << std::format("I have {} {}. \n", apples, fruit);
+    cout << std::format("Price {0:.2f}, Count: {1:04d} \n", price, apples);
+    // 3. 直接返回字符串，方便组合
+    std::string msg = std::format("Total: ${:.2f}", apples * price);
+    std::cout << msg << std::endl; // Total: $15.70
+ }
 
 int main(int argv, char** argc) {
-    q_17_28_29_30();
+    test_format();
+    test_io_format();
+    // q_17_28_29_30();
     test_random();
     test_regex();
     q_17_11();
